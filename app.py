@@ -5,69 +5,65 @@ import altair as alt
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="Rave Manager | Terminal",
+    page_title="Rave Manager | POS",
     page_icon="🦇",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- TEMA DARK/UNDERGROUND (CSS) ---
+# --- TEMA CLEAN & MINIMAL (CSS) ---
 st.markdown("""
     <style>
-    /* Sfondo generale e font */
+    /* Sfondo generale elegante e meno aggressivo */
     .stApp {
-        background-color: #0a0a0a;
-        color: #e0e0e0;
+        background-color: #121212;
+        color: #f5f5f7;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Stile Bottoni Cassa - Vibe Neon/Terminale */
+    /* Bottoni Cassa - Clean & Modern */
     .stButton>button {
         width: 100%;
         height: 100px;
-        font-family: 'Courier New', Courier, monospace;
         font-size: 20px !important;
-        font-weight: bold;
-        border-radius: 8px;
-        background-color: #111111;
-        border: 1px solid #333333;
-        color: #ffffff;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        font-weight: 600;
+        border-radius: 12px;
+        background-color: #1e1e1e;
+        border: 1px solid #2d2d2d;
+        color: #f5f5f7;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
+    
+    /* Hover sottile e tattile */
     .stButton>button:hover {
         transform: translateY(-2px);
-        border-color: #00ffcc;
-        color: #00ffcc;
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+        background-color: #2a2a2a;
+        border-color: #555555;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     }
-    
-    /* Colori Neon specifici per i pulsanti */
-    div.stButton > button[data-testid*="kit"] { border-bottom: 3px solid #ff0055; }
-    div.stButton > button[data-testid*="vent"] { border-bottom: 3px solid #0055ff; }
-    div.stButton > button[data-testid*="tapp"] { border-bottom: 3px solid #ffaa00; }
-    div.stButton > button[data-testid*="glow"] { border-bottom: 3px solid #cc00ff; }
-    div.stButton > button[data-testid*="bundle"] { border-bottom: 3px solid #00ff00; }
 
-    /* Bottone Paga (Primary) */
+    /* Bottone Paga (Primary) - Verde brillante e pulito */
     div.stButton > button[kind="primary"] {
-        background-color: #00ffcc;
-        color: #000000;
+        background-color: #30d158;
+        color: #ffffff;
         border: none;
-        border-bottom: 3px solid #00b38f;
+        box-shadow: 0 4px 10px rgba(48, 209, 88, 0.2);
     }
     div.stButton > button[kind="primary"]:hover {
-        background-color: #33ffdb;
-        color: #000000;
+        background-color: #2db34c;
+        color: #ffffff;
     }
 
-    /* Metriche e Tabelle */
+    /* Metriche e Box laterali */
     div[data-testid="metric-container"] {
-        background-color: #161618;
-        border-left: 3px solid #bfff00;
+        background-color: #1e1e1e;
+        border: 1px solid #2d2d2d;
         padding: 15px;
-        border-radius: 5px;
+        border-radius: 12px;
     }
     
+    /* Nasconde l'header di default per pulizia */
     header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -159,51 +155,73 @@ def conferma_ordine():
 
 # --- SIDEBAR (SYS.CTRL) ---
 with st.sidebar:
-    st.markdown("### 🎛️ SYS.CTRL")
-    if st.button("💀 WIPE SALES DATA"):
+    st.markdown("### 🎛️ IMPOSTAZIONI")
+    if st.button("💀 CANCELLA STORICO VENDITE"):
         st.session_state.sales_history = []
         st.rerun()
-    if st.button("🔄 FACTORY RESET"):
+    if st.button("🔄 FACTORY RESET DATI"):
         st.session_state.carrello = {}
         del st.session_state.inventory_list
         del st.session_state.sales_history
         st.rerun()
 
 # --- MAIN UI ---
-st.markdown("## 🦇 RAVE.SYS // POS TERMINAL")
+st.markdown("## 🦇 RAVE // POS TERMINAL")
 
 tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
 
 # ==========================================
-# TAB 1: CASSA (Layout a 2 Zone con Carrello)
+# TAB 1: CASSA (Layout a 2 Zone Dinamico)
 # ==========================================
 with tab_cassa:
     col_pos, col_receipt = st.columns([6, 4], gap="large")
 
-    # --- ZONA SINISTRA: TASTIERA ---
+    # --- ZONA SINISTRA: TASTIERA DINAMICA ---
     with col_pos:
-        st.markdown("#### 👕 GEAR & MERCH")
-        col_m1, col_m2, col_m3 = st.columns(3)
-        with col_m1: st.button("🔥 KIT Leash\n€5.00", key="btn_kit", on_click=aggiungi_al_carrello, args=("kit-1",))
-        with col_m2: st.button("🌬️ Ventaglio\n€5.00", key="btn_vent", on_click=aggiungi_al_carrello, args=("vent-1",))
-        with col_m3: st.button("👂 Tappi\n€1.00", key="btn_tapp", on_click=aggiungi_al_carrello, args=("tapp-1",))
+        st.markdown("#### 🛒 TERMINALE OPERATIVO")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Filtra i prodotti dall'inventario
+        prodotti_singoli = [p for p in st.session_state.inventory_list if not p.get("is_bundle")]
+        prodotti_bundle = [p for p in st.session_state.inventory_list if p.get("is_bundle")]
+        
+        # 1. Generazione Prodotti Singoli
+        if prodotti_singoli:
+            st.markdown("##### 👕 PRODOTTI")
+            colonne_singoli = st.columns(3)
+            
+            for i, item in enumerate(prodotti_singoli):
+                with colonne_singoli[i % 3]:
+                    label_bottone = f"{item['name']}\n{VALUTA_SIMBOLO}{item['price']:.2f}"
+                    st.button(
+                        label_bottone, 
+                        key=f"btn_{item['id']}", 
+                        on_click=aggiungi_al_carrello, 
+                        args=(item["id"],)
+                    )
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        st.markdown("#### ⚡ ENERGY & GLOW")
-        col_g1, col_g2 = st.columns(2)
-        with col_g1: st.button("✨ Glow Stick\n€1.00", key="btn_glow", on_click=aggiungi_al_carrello, args=("glow-1",))
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        st.markdown("#### 🎁 BUNDLE SPECIALI")
-        st.button("☢️ RAVE PACK (Kit+Vent+2Glow)\n€10.00", key="btn_bundle", on_click=aggiungi_al_carrello, args=("bundle-starter",))
+        # 2. Generazione Bundle
+        if prodotti_bundle:
+            st.markdown("##### 🎁 BUNDLE SPECIALI")
+            colonne_bundle = st.columns(2)
+            
+            for i, item in enumerate(prodotti_bundle):
+                with colonne_bundle[i % 2]:
+                    label_bottone = f"{item['name']}\n{VALUTA_SIMBOLO}{item['price']:.2f}"
+                    st.button(
+                        label_bottone, 
+                        key=f"btn_{item['id']}", 
+                        on_click=aggiungi_al_carrello, 
+                        args=(item["id"],)
+                    )
 
     # --- ZONA DESTRA: SCONTRINO/CARRELLO ---
     with col_receipt:
         st.markdown("""
-            <div style='background-color: #1a1a1c; padding: 20px; border-radius: 10px; border: 1px solid #333;'>
-                <h3 style='margin-top: 0; color: #00ffcc;'>🛒 ORDINE ATTUALE</h3>
+            <div style='background-color: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #2d2d2d;'>
+                <h3 style='margin-top: 0; color: #f5f5f7;'>🛒 ORDINE ATTUALE</h3>
         """, unsafe_allow_html=True)
         
         totale_ordine = 0.0
@@ -214,10 +232,10 @@ with tab_cassa:
                 if item_info:
                     subtotale = item_info["price"] * qta
                     totale_ordine += subtotale
-                    st.markdown(f"**{qta}x** {item_info['name']} = **€{subtotale:.2f}**")
+                    st.markdown(f"**{qta}x** {item_info['name']} = **{VALUTA_SIMBOLO}{subtotale:.2f}**")
             
             st.divider()
-            st.metric(label="TOTALE DA INCASSARE", value=f"€ {totale_ordine:.2f}")
+            st.metric(label="TOTALE DA INCASSARE", value=f"{VALUTA_SIMBOLO} {totale_ordine:.2f}")
             st.markdown("<br>", unsafe_allow_html=True)
             
             col_btn_1, col_btn_2 = st.columns(2)
@@ -228,49 +246,50 @@ with tab_cassa:
                 
         else:
             st.info("Terminale pronto. Aggiungi prodotti all'ordine.")
-            st.metric(label="TOTALE DA INCASSARE", value="€ 0.00")
+            st.metric(label="TOTALE DA INCASSARE", value=f"{VALUTA_SIMBOLO} 0.00")
             
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# TAB 2: INVENTARIO (CRUD)
+# TAB 2: INVENTARIO (CRUD COMPLETO)
 # ==========================================
 with tab_inventario:
-    st.markdown("#### > DATABASE MANAGEMENT_")
+    st.markdown("#### > GESTIONE DATABASE")
     df_inv = pd.DataFrame(st.session_state.inventory_list)
     
+    # Configurazione sbloccata per permettere modifiche totali
     cfg = {
-        "id": st.column_config.TextColumn("ID", disabled=True),
-        "name": st.column_config.TextColumn("NOME"),
-        "cost": st.column_config.NumberColumn("COSTO", format="€%.2f"),
-        "price": st.column_config.NumberColumn("PREZZO", format="€%.2f"),
+        "id": st.column_config.TextColumn("ID (Univoco)", required=True),
+        "name": st.column_config.TextColumn("NOME PRODOTTO"),
+        "cost": st.column_config.NumberColumn("COSTO", format=f"{VALUTA_SIMBOLO}%.2f"),
+        "price": st.column_config.NumberColumn("PREZZO", format=f"{VALUTA_SIMBOLO}%.2f"),
         "initial_qty": st.column_config.NumberColumn("QTA INIZIALE"),
-        "current_qty": st.column_config.NumberColumn("QTA ATTUALE", disabled=True),
+        "current_qty": st.column_config.NumberColumn("QTA ATTUALE"),
         "is_bundle": st.column_config.CheckboxColumn("BUNDLE?"),
         "bundle_composition": st.column_config.TextColumn("COMPOSIZIONE (ID:QTY)")
     }
     
     edited_df = st.data_editor(df_inv, key="inv_editor", num_rows="dynamic", column_config=cfg, use_container_width=True, hide_index=True)
     
-    if st.button("💾 SALVA MODIFICHE AL DATABASE"):
+    if st.button("💾 SALVA E AGGIORNA CASSA"):
         st.session_state.inventory_list = edited_df.to_dict('records')
-        st.success("Database aggiornato.")
+        st.success("Database e pulsanti cassa aggiornati con successo!")
         st.rerun()
 
 # ==========================================
 # TAB 3: ANALISI E REPORT
 # ==========================================
 with tab_analisi:
-    st.markdown("#### > SYSTEM METRICS_")
+    st.markdown("#### > METRICHE DI SISTEMA")
     
     if st.session_state.sales_history:
         df_sales = pd.DataFrame(st.session_state.sales_history)
         
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("REVENUE", f"{VALUTA_SIMBOLO}{df_sales['revenue'].sum():.2f}")
-        m2.metric("COSTS", f"{VALUTA_SIMBOLO}{df_sales['cost'].sum():.2f}")
-        m3.metric("NET PROFIT", f"{VALUTA_SIMBOLO}{df_sales['profit'].sum():.2f}")
-        m4.metric("UNITS SOLD", f"{df_sales['quantity'].sum()}")
+        m1.metric("RICAVO", f"{VALUTA_SIMBOLO}{df_sales['revenue'].sum():.2f}")
+        m2.metric("COSTI MERCE", f"{VALUTA_SIMBOLO}{df_sales['cost'].sum():.2f}")
+        m3.metric("PROFITTO NETTO", f"{VALUTA_SIMBOLO}{df_sales['profit'].sum():.2f}")
+        m4.metric("UNITÀ VENDUTE", f"{df_sales['quantity'].sum()}")
         
         st.divider()
         
@@ -278,20 +297,18 @@ with tab_analisi:
         with c1:
             df_sales['cumulative'] = df_sales['profit'].cumsum()
             chart = alt.Chart(df_sales).mark_area(
-                line={'color':'#00ffcc'}, color=alt.Gradient(
-                    gradient='linear', stops=[alt.GradientStop(color='#00ffcc', offset=0), alt.GradientStop(color='#0a0a0a', offset=1)], x1=1, x2=1, y1=1, y2=0
+                line={'color':'#30d158'}, color=alt.Gradient(
+                    gradient='linear', stops=[alt.GradientStop(color='#30d158', offset=0), alt.GradientStop(color='#121212', offset=1)], x1=1, x2=1, y1=1, y2=0
                 )
             ).encode(
-                x=alt.X('timestamp:T', title='TIME', axis=alt.Axis(grid=False)),
-                y=alt.Y('cumulative:Q', title='PROFIT', axis=alt.Axis(grid=False))
+                x=alt.X('timestamp:T', title='TEMPO', axis=alt.Axis(grid=False)),
+                y=alt.Y('cumulative:Q', title='PROFITTO', axis=alt.Axis(grid=False))
             ).properties(height=300)
             st.altair_chart(chart, use_container_width=True)
             
         with c2:
-            st.markdown("**ULTIME VENDITE CONFERMATE**")
+            st.markdown("**ULTIME VENDITE**")
             st.dataframe(df_sales[['timestamp', 'product_name', 'revenue']].tail(8).sort_index(ascending=False), use_container_width=True, hide_index=True)
             
     else:
-        st.code("NO_DATA_FOUND // NESSUNA TRANSAZIONE REGISTRATA.", language="bash")
-
-
+        st.info("Nessuna transazione registrata. Inizia a vendere per popolare i grafici.")
