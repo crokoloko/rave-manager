@@ -13,7 +13,7 @@ st.set_page_config(
 
 # --- TEMA DARK/UNDERGROUND (CSS) ---
 st.markdown("""
-    <style>
+   <style>
     /* Sfondo generale e font */
     .stApp {
         background-color: #0a0a0a;
