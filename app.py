@@ -7,7 +7,7 @@ import os
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="TKLABZ | POS Terminal",
+    page_title="TKLABZ Terminal",
     page_icon="🦇",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -202,7 +202,7 @@ with st.sidebar:
 
 # --- MAIN UI (TITOLO TKLABZ FLUO) ---
 st.markdown("""
-    <h2 style='color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; margin-bottom: 20px;'>
+    <h2 style=style='text-align: center; color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; margin-bottom: 20px;'>
         🦇 TKLABZ
     </h2>
 """, unsafe_allow_html=True)
