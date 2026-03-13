@@ -5,10 +5,9 @@ import altair as alt
 import json
 import os
 
-
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="Rave Manager | POS",
+    page_title="TKLABZ | POS Terminal",
     page_icon="🦇",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -17,7 +16,7 @@ st.set_page_config(
 # --- TEMA CLEAN & MINIMAL (CSS) ---
 st.markdown("""
     <style>
-    /* Sfondo generale elegante e meno aggressivo */
+    /* Sfondo generale elegante */
     .stApp {
         background-color: #121212;
         color: #f5f5f7;
@@ -38,7 +37,6 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
-    /* Hover sottile e tattile */
     .stButton>button:hover {
         transform: translateY(-2px);
         background-color: #2a2a2a;
@@ -66,24 +64,21 @@ st.markdown("""
         border-radius: 12px;
     }
     
-    /* Nasconde l'header di default per pulizia */
     header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- COSTANTI E CONFIGURAZIONI ---
 VALUTA_SIMBOLO = "€"
-
-# --- MOTORE DATABASE LOCALE (JSON) ---
 DB_INVENTARIO = "db_inventario.json"
 DB_VENDITE = "db_vendite.json"
 
+# --- MOTORE DATABASE LOCALE (JSON) ---
 def salva_db_inventario():
-    with open(DB_INVENTARIO, "w") as f:
-        json.dump(st.session_state.inventory_list, f, indent=4)
+    with open(DB_INVENTARIO, "w", encoding="utf-8") as f:
+        json.dump(st.session_state.inventory_list, f, indent=4, ensure_ascii=False)
 
 def salva_db_vendite():
-    # Convertiamo i timestamp in stringhe per poterli salvare in JSON
     vendite_serializzabili = []
     for v in st.session_state.sales_history:
         v_copy = v.copy()
@@ -91,16 +86,14 @@ def salva_db_vendite():
             v_copy['timestamp'] = v_copy['timestamp'].isoformat()
         vendite_serializzabili.append(v_copy)
         
-    with open(DB_VENDITE, "w") as f:
-        json.dump(vendite_serializzabili, f, indent=4)
+    with open(DB_VENDITE, "w", encoding="utf-8") as f:
+        json.dump(vendite_serializzabili, f, indent=4, ensure_ascii=False)
 
 def carica_db():
-    # Carica Inventario
     if os.path.exists(DB_INVENTARIO):
-        with open(DB_INVENTARIO, "r") as f:
+        with open(DB_INVENTARIO, "r", encoding="utf-8") as f:
             st.session_state.inventory_list = json.load(f)
     else:
-        # Dati di default se il file non esiste ancora
         st.session_state.inventory_list = [
             {"id": "kit-1", "name": "🔥 KIT Leash", "cost": 0.80, "price": 5.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
             {"id": "vent-1", "name": "🌬️ Ventaglio", "cost": 0.80, "price": 5.0, "initial_qty": 150, "current_qty": 150, "is_bundle": False},
@@ -110,11 +103,9 @@ def carica_db():
         ]
         salva_db_inventario()
 
-    # Carica Vendite
     if os.path.exists(DB_VENDITE):
-        with open(DB_VENDITE, "r") as f:
+        with open(DB_VENDITE, "r", encoding="utf-8") as f:
             vendite = json.load(f)
-            # Riconvertiamo le stringhe in datetime
             for v in vendite:
                 v['timestamp'] = datetime.fromisoformat(v['timestamp'])
             st.session_state.sales_history = vendite
@@ -123,21 +114,9 @@ def carica_db():
         salva_db_vendite()
 
 # --- INIZIALIZZAZIONE DATI ---
-if 'inventory_list' not in st.session_state:
-    st.session_state.inventory_list = [
-        {"id": "kit-1", "name": "🔥 KIT Leash", "cost": 0.80, "price": 5.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
-        {"id": "vent-1", "name": "🌬️ Ventaglio", "cost": 0.80, "price": 5.0, "initial_qty": 150, "current_qty": 150, "is_bundle": False},
-        {"id": "tapp-1", "name": "👂 Tappi", "cost": 0.05, "price": 1.0, "initial_qty": 1000, "current_qty": 1000, "is_bundle": False},
-        {"id": "glow-1", "name": "✨ Glow Stick", "cost": 0.10, "price": 1.0, "initial_qty": 500, "current_qty": 500, "is_bundle": False},
-        {
-            "id": "bundle-starter", "name": "☢️ RAVE PACK", "cost": 1.00, "price": 10.0, 
-            "initial_qty": 999, "current_qty": 999, "is_bundle": True, 
-            "bundle_composition": {"kit-1": 1, "vent-1": 1, "glow-1": 2}
-        }
-    ]
-
-if 'sales_history' not in st.session_state:
-    st.session_state.sales_history = []
+if 'db_caricato' not in st.session_state:
+    carica_db()
+    st.session_state.db_caricato = True
 
 if 'carrello' not in st.session_state:
     st.session_state.carrello = {}
@@ -158,7 +137,6 @@ def registra_vendita(item_id, quantity=1):
 
     if item.get("is_bundle"):
         comp = item.get("bundle_composition", {})
-        # Verifica scorte componenti
         for c_id, c_qty in comp.items():
             c_item = next((i for i in st.session_state.inventory_list if i["id"] == c_id), None)
             if not c_item or c_item["current_qty"] < (c_qty * quantity):
@@ -180,7 +158,6 @@ def registra_vendita(item_id, quantity=1):
         total_cost = item["cost"] * quantity
         revenue = item["price"] * quantity
 
-    # Registra nel database storico
     st.session_state.sales_history.append({
         "timestamp": datetime.now(),
         "product_name": item["name"],
@@ -189,6 +166,9 @@ def registra_vendita(item_id, quantity=1):
         "cost": total_cost,
         "profit": revenue - total_cost
     })
+    
+    salva_db_vendite()
+    salva_db_inventario()
     return True
 
 def conferma_ordine():
@@ -209,15 +189,23 @@ with st.sidebar:
     st.markdown("### 🎛️ IMPOSTAZIONI")
     if st.button("💀 CANCELLA STORICO VENDITE"):
         st.session_state.sales_history = []
+        salva_db_vendite()
+        st.success("Storico vendite azzerato.")
         st.rerun()
+        
     if st.button("🔄 FACTORY RESET DATI"):
         st.session_state.carrello = {}
-        del st.session_state.inventory_list
-        del st.session_state.sales_history
+        if os.path.exists(DB_INVENTARIO): os.remove(DB_INVENTARIO)
+        if os.path.exists(DB_VENDITE): os.remove(DB_VENDITE)
+        del st.session_state.db_caricato
         st.rerun()
 
-# --- MAIN UI ---
-st.markdown("## 🦇 RAVE // POS TERMINAL")
+# --- MAIN UI (TITOLO TKLABZ FLUO) ---
+st.markdown("""
+    <h2 style='color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; margin-bottom: 20px;'>
+        🦇 TKLABZ
+    </h2>
+""", unsafe_allow_html=True)
 
 tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
 
@@ -227,16 +215,13 @@ tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB
 with tab_cassa:
     col_pos, col_receipt = st.columns([6, 4], gap="large")
 
-    # --- ZONA SINISTRA: TASTIERA DINAMICA ---
     with col_pos:
         st.markdown("#### 🛒 TERMINALE OPERATIVO")
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Filtra i prodotti dall'inventario
         prodotti_singoli = [p for p in st.session_state.inventory_list if not p.get("is_bundle")]
         prodotti_bundle = [p for p in st.session_state.inventory_list if p.get("is_bundle")]
         
-        # 1. Generazione Prodotti Singoli
         if prodotti_singoli:
             st.markdown("##### 👕 PRODOTTI")
             colonne_singoli = st.columns(3)
@@ -253,7 +238,6 @@ with tab_cassa:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 2. Generazione Bundle
         if prodotti_bundle:
             st.markdown("##### 🎁 BUNDLE SPECIALI")
             colonne_bundle = st.columns(2)
@@ -268,7 +252,6 @@ with tab_cassa:
                         args=(item["id"],)
                     )
 
-    # --- ZONA DESTRA: SCONTRINO/CARRELLO ---
     with col_receipt:
         st.markdown("""
             <div style='background-color: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #2d2d2d;'>
@@ -302,37 +285,79 @@ with tab_cassa:
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# TAB 2: INVENTARIO (CRUD COMPLETO)
+# TAB 2: INVENTARIO (CRUD COMPLETO E RESET)
 # ==========================================
 with tab_inventario:
-    st.markdown("#### > GESTIONE DATABASE")
-    df_inv = pd.DataFrame(st.session_state.inventory_list)
+    col_titolo, col_azioni = st.columns([7, 3])
     
-    # Configurazione sbloccata per permettere modifiche totali
+    with col_titolo:
+        st.markdown("#### > GESTIONE DATABASE")
+        
+    with col_azioni:
+        if st.button("🗑️ AZZERA TUTTO L'INVENTARIO"):
+            st.session_state.inventory_list = []
+            salva_db_inventario()
+            st.rerun()
+
+    st.info("💡 Usa il tasto ➕ nell'angolo in basso a destra della tabella per aggiungere nuovi prodotti da zero.")
+
+    colonne_db = ["id", "name", "cost", "price", "initial_qty", "current_qty", "is_bundle", "bundle_composition"]
+    
+    if st.session_state.inventory_list:
+        df_inv = pd.DataFrame(st.session_state.inventory_list)
+    else:
+        df_inv = pd.DataFrame(columns=colonne_db)
+    
     cfg = {
-        "id": st.column_config.TextColumn("ID (Univoco)", required=True),
-        "name": st.column_config.TextColumn("NOME PRODOTTO"),
-        "cost": st.column_config.NumberColumn("COSTO", format=f"{VALUTA_SIMBOLO}%.2f"),
-        "price": st.column_config.NumberColumn("PREZZO", format=f"{VALUTA_SIMBOLO}%.2f"),
-        "initial_qty": st.column_config.NumberColumn("QTA INIZIALE"),
-        "current_qty": st.column_config.NumberColumn("QTA ATTUALE"),
-        "is_bundle": st.column_config.CheckboxColumn("BUNDLE?"),
+        "id": st.column_config.TextColumn("ID (Univoco)", required=True, default="nuovo-id"),
+        "name": st.column_config.TextColumn("NOME PRODOTTO", required=True, default="Nuovo Prodotto"),
+        "cost": st.column_config.NumberColumn("COSTO", format=f"{VALUTA_SIMBOLO}%.2f", default=0.0),
+        "price": st.column_config.NumberColumn("PREZZO", format=f"{VALUTA_SIMBOLO}%.2f", default=5.0),
+        "initial_qty": st.column_config.NumberColumn("QTA INIZIALE", default=100),
+        "current_qty": st.column_config.NumberColumn("QTA ATTUALE", default=100),
+        "is_bundle": st.column_config.CheckboxColumn("BUNDLE?", default=False),
         "bundle_composition": st.column_config.TextColumn("COMPOSIZIONE (ID:QTY)")
     }
     
-    edited_df = st.data_editor(df_inv, key="inv_editor", num_rows="dynamic", column_config=cfg, use_container_width=True, hide_index=True)
+    edited_df = st.data_editor(
+        df_inv, 
+        key="inv_editor", 
+        num_rows="dynamic", 
+        column_config=cfg, 
+        use_container_width=True, 
+        hide_index=True
+    )
     
-    if st.button("💾 SALVA E AGGIORNA CASSA"):
+    if st.button("💾 SALVA E AGGIORNA CASSA", type="primary"):
         st.session_state.inventory_list = edited_df.to_dict('records')
-        st.success("Database e pulsanti cassa aggiornati con successo!")
+        salva_db_inventario()
+        st.success("Database aggiornato! La cassa ora riflette i nuovi prodotti.")
         st.rerun()
 
 # ==========================================
-# TAB 3: ANALISI E REPORT
+# TAB 3: ANALISI E REPORT (CON ESPORTAZIONE)
 # ==========================================
 with tab_analisi:
-    st.markdown("#### > METRICHE DI SISTEMA")
+    col_titolo_an, col_export = st.columns([7, 3])
     
+    with col_titolo_an:
+        st.markdown("#### > METRICHE DI SISTEMA")
+        
+    with col_export:
+        if st.session_state.sales_history:
+            df_export = pd.DataFrame(st.session_state.sales_history)
+            csv_data = df_export.to_csv(index=False).encode('utf-8')
+            nome_file = f"chiusura_cassa_{datetime.now().strftime('%Y_%m_%d')}.csv"
+            
+            st.download_button(
+                label="📥 ESPORTA REPORT (CSV)",
+                data=csv_data,
+                file_name=nome_file,
+                mime="text/csv",
+                type="primary",
+                use_container_width=True
+            )
+
     if st.session_state.sales_history:
         df_sales = pd.DataFrame(st.session_state.sales_history)
         
