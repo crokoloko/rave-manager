@@ -203,7 +203,7 @@ st.markdown("""
 tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
 
 # ==========================================
-# TAB 1: CASSA (Layout a 2 Zone)
+# TAB 1: CASSA (Layout a 2 Zone con Griglia Fluida)
 # ==========================================
 with tab_cassa:
     col_pos, col_receipt = st.columns([6, 4], gap="large")
@@ -212,38 +212,29 @@ with tab_cassa:
         st.markdown("#### 🛒 TERMINALE OPERATIVO")
         st.markdown("<br>", unsafe_allow_html=True)
         
-        prodotti_singoli = [p for p in st.session_state.inventory_list if not p.get("is_bundle")]
-        prodotti_bundle = [p for p in st.session_state.inventory_list if p.get("is_bundle")]
+        # Recupera tutti i prodotti dell'inventario
+        tutti_i_prodotti = st.session_state.inventory_list
+        NUM_COLONNE = 3  # Puoi cambiare questo numero per modificare i bottoni per riga
         
-        if prodotti_singoli:
-            st.markdown("##### 👕 PRODOTTI")
-            colonne_singoli = st.columns(3)
+        # Genera una griglia perfetta riga per riga
+        for i in range(0, len(tutti_i_prodotti), NUM_COLONNE):
+            righe_colonne = st.columns(NUM_COLONNE)
             
-            for i, item in enumerate(prodotti_singoli):
-                with colonne_singoli[i % 3]:
-                    label_bottone = f"{item['name']}\n{VALUTA_SIMBOLO}{item['price']:.2f}"
-                    st.button(
-                        label_bottone, 
-                        key=f"btn_{item['id']}", 
-                        on_click=aggiungi_al_carrello, 
-                        args=(item["id"],)
-                    )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        if prodotti_bundle:
-            st.markdown("##### 🎁 BUNDLE SPECIALI")
-            colonne_bundle = st.columns(2)
-            
-            for i, item in enumerate(prodotti_bundle):
-                with colonne_bundle[i % 2]:
-                    label_bottone = f"{item['name']}\n{VALUTA_SIMBOLO}{item['price']:.2f}"
-                    st.button(
-                        label_bottone, 
-                        key=f"btn_{item['id']}", 
-                        on_click=aggiungi_al_carrello, 
-                        args=(item["id"],)
-                    )
+            for j, col in enumerate(righe_colonne):
+                indice_prodotto = i + j
+                
+                # Se c'è un prodotto per questa posizione, crea il bottone
+                if indice_prodotto < len(tutti_i_prodotti):
+                    item = tutti_i_prodotti[indice_prodotto]
+                    with col:
+                        label_bottone = f"{item['name']}\n{VALUTA_SIMBOLO}{item['price']:.2f}"
+                        st.button(
+                            label_bottone, 
+                            key=f"btn_cassa_{item['id']}", 
+                            on_click=aggiungi_al_carrello, 
+                            args=(item["id"],),
+                            use_container_width=True # Forza l'allineamento ai bordi
+                        )
 
     with col_receipt:
         st.markdown("""
@@ -278,20 +269,10 @@ with tab_cassa:
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# TAB 2: INVENTARIO (Anti-Doppioni)
+# TAB 2: INVENTARIO E GESTIONE
 # ==========================================
 with tab_inventario:
-    col_titolo, col_azioni = st.columns([7, 3])
-    
-    with col_titolo:
-        st.markdown("#### > GESTIONE DATABASE")
-        
-    with col_azioni:
-        if st.button("🗑️ AZZERA TUTTO L'INVENTARIO"):
-            st.session_state.inventory_list = []
-            salva_db_inventario()
-            st.rerun()
-
+    st.markdown("#### > GESTIONE DATABASE")
     st.info("💡 Usa il tasto ➕ nell'angolo in basso a destra della tabella per aggiungere nuovi prodotti da zero.")
 
     colonne_db = ["id", "name", "cost", "price", "initial_qty", "current_qty", "is_bundle", "bundle_composition"]
@@ -321,11 +302,11 @@ with tab_inventario:
         hide_index=True
     )
     
-    if st.button("💾 SALVA E AGGIORNA CASSA", type="primary"):
+    if st.button("💾 SALVA E AGGIORNA CASSA", type="primary", use_container_width=True):
         nuovi_dati = edited_df.to_dict('records')
         lista_id = [item['id'] for item in nuovi_dati if item['id']]
         
-        # Controllo di sicurezza per evitare errori critici di Streamlit
+        # Controllo di sicurezza per evitare errori critici di ID duplicati
         if len(lista_id) != len(set(lista_id)):
             st.error("❌ ERRORE: Hai inserito due o più prodotti con lo STESSO ID! Modifica la prima colonna in modo che ogni ID sia diverso (es. kit-1, kit-2).")
         else:
@@ -334,29 +315,19 @@ with tab_inventario:
             st.success("Database aggiornato! La cassa ora riflette i nuovi prodotti.")
             st.rerun()
 
+    # --- ZONA RESET IN FONDO ALLA PAGINA ---
+    st.divider()
+    st.markdown("#### ⚠️ ZONA DI PERICOLO")
+    if st.button("🗑️ AZZERA TUTTO L'INVENTARIO"):
+        st.session_state.inventory_list = []
+        salva_db_inventario()
+        st.rerun()
+
 # ==========================================
-# TAB 3: ANALISI E REPORT (Con Esportazione CSV)
+# TAB 3: ANALISI E REPORT
 # ==========================================
 with tab_analisi:
-    col_titolo_an, col_export = st.columns([7, 3])
-    
-    with col_titolo_an:
-        st.markdown("#### > METRICHE DI SISTEMA")
-        
-    with col_export:
-        if st.session_state.sales_history:
-            df_export = pd.DataFrame(st.session_state.sales_history)
-            csv_data = df_export.to_csv(index=False).encode('utf-8')
-            nome_file = f"chiusura_cassa_{datetime.now().strftime('%Y_%m_%d')}.csv"
-            
-            st.download_button(
-                label="📥 ESPORTA REPORT (CSV)",
-                data=csv_data,
-                file_name=nome_file,
-                mime="text/csv",
-                type="primary",
-                use_container_width=True
-            )
+    st.markdown("#### > METRICHE DI SISTEMA")
 
     if st.session_state.sales_history:
         df_sales = pd.DataFrame(st.session_state.sales_history)
@@ -385,6 +356,23 @@ with tab_analisi:
         with c2:
             st.markdown("**ULTIME VENDITE**")
             st.dataframe(df_sales[['timestamp', 'product_name', 'revenue']].tail(8).sort_index(ascending=False), use_container_width=True, hide_index=True)
+            
+        # --- ZONA ESPORTAZIONE IN FONDO ALLA PAGINA ---
+        st.divider()
+        st.markdown("#### 📥 ESPORTAZIONE DATI")
+        
+        df_export = pd.DataFrame(st.session_state.sales_history)
+        csv_data = df_export.to_csv(index=False).encode('utf-8')
+        nome_file = f"chiusura_cassa_{datetime.now().strftime('%Y_%m_%d')}.csv"
+        
+        st.download_button(
+            label="📥 ESPORTA REPORT A FINE SERATA (CSV)",
+            data=csv_data,
+            file_name=nome_file,
+            mime="text/csv",
+            type="primary",
+            use_container_width=True
+        )
             
     else:
         st.info("Nessuna transazione registrata. Inizia a vendere per popolare i grafici.")
