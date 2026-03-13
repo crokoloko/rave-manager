@@ -12,87 +12,46 @@ st.set_page_config(page_title="TKLZ | MATRIX POS", layout="wide", initial_sideba
 st.markdown("""
     <style>
     .stApp { background-color: #0a0a0a; color: #ffffff !important; }
-    
     h1, h2, h3, h4, p, label, .stMarkdown, [data-testid="stMarkdownContainer"] { 
         color: #ffffff !important; 
         font-family: 'Courier New', monospace !important;
         text-align: center !important;
-        display: flex;
-        justify-content: center;
-        width: 100%;
+        display: flex; justify-content: center; width: 100%;
     }
-    
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
     .matrix-bar {
-        background-color: #000000;
-        border-top: 2px solid #00ff41;
-        border-bottom: 2px solid #00ff41;
-        color: #00ff41;
-        padding: 10px 0;
-        font-weight: bold;
-        font-family: 'Courier New', monospace;
-        font-size: 15px;
-        overflow: hidden;
-        white-space: nowrap;
-        margin-bottom: 15px;
-        text-shadow: 0 0 8px #00ff41;
-        display: flex;
-        justify-content: center;
+        background-color: #000000; border-top: 2px solid #00ff41; border-bottom: 2px solid #00ff41;
+        color: #00ff41; padding: 10px 0; font-weight: bold; font-family: 'Courier New', monospace;
+        font-size: 15px; overflow: hidden; white-space: nowrap; margin-bottom: 15px;
+        text-shadow: 0 0 8px #00ff41; display: flex; justify-content: center;
     }
-    
-    .matrix-text {
-        display: inline-block;
-        padding-left: 100%;
-        animation: matrix-scroll 80s linear infinite, flicker 2s infinite;
-    }
-
+    .matrix-text { display: inline-block; padding-left: 100%; animation: matrix-scroll 80s linear infinite, flicker 2s infinite; }
     @keyframes matrix-scroll { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
     @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
     .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: center; gap: 20px; }
-    
-    [data-testid="column"] { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-
     .stButton>button {
-        width: 100%; height: 85px;
-        background: rgba(20, 20, 20, 0.9) !important;
-        border: 1px solid #00ff41 !important;
-        color: #ffffff !important;
-        border-radius: 5px !important;
-        font-weight: bold !important;
-        transition: all 0.2s;
-        text-align: center !important;
+        width: 100%; height: 85px; background: rgba(20, 20, 20, 0.9) !important;
+        border: 1px solid #00ff41 !important; color: #ffffff !important;
+        border-radius: 5px !important; font-weight: bold !important; transition: all 0.2s;
     }
-    .stButton>button:hover { 
-        box-shadow: 0 0 15px #00ff41 !important;
-        background: #00ff41 !important;
-        color: #000000 !important;
-    }
+    .stButton>button:hover { box-shadow: 0 0 15px #00ff41 !important; background: #00ff41 !important; color: #000000 !important; }
     
-    /* Box Strategia */
     .strategy-card {
-        border: 1px solid #00ff41;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 10px;
-        background: rgba(0, 255, 65, 0.05);
+        border: 1px solid #00ff41; padding: 20px; border-radius: 10px; margin: 10px;
+        background: rgba(0, 255, 65, 0.1); box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
     }
+    .margin-high { color: #00ff41; font-weight: bold; }
+    .margin-low { color: #ff453a; font-weight: bold; }
 
     header {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- POESIA MAIUSCOLA ---
-poesia_maiuscola = (
-    "NELLA PENOMBRA DEL MAGAZZINO, TRA I NEON CHE FRIGGONO, I CONTI TORNANO SEMPRE, ANCHE QUANDO I CUORI SI AFFLIGGONO. "
-    "CIFRE CHE SCORRONO SU VETRI SCURI, SILENZIOSE E AFFILATE, MENTRE FUORI LE OMBRE SI MUOVONO, SU STRADE DIMENTICATE. "
-    "UN OCCHIO AL TERMINALE, L'ALTRO ALLA PORTA BLINDATA, LA MERCE È VITA, LA CASSA È LA NOSTRA SPADA AFFILATA. "
-    "NON SERVONO NOMI, NON SERVONO TROPPE PAROLE, QUI IL BUSINESS FIORICE LONTANO DAL RAGGIO DEL SOLE. "
-    "UN CLIC, UNA VENDITA, UN ALTRO DROP CHE DECOLLA, MENTRE IL CODICE BRUCIA E LA CITTÀ SI CONTROLLA. "
-    "UNDERGROUND NEL SANGUE, TK LABS NELLA MENTE, MUOVIAMO IL CAPITALE, RESTANDO NELL'OMBRA, SEGRETAMENTE."
-)
-st.markdown(f'<div class="matrix-bar"><div class="matrix-text">*** {poesia_maiuscola} *** {poesia_maiuscola} ***</div></div>', unsafe_allow_html=True)
+poesia = "NELLA PENOMBRA DEL MAGAZZINO, TRA I NEON CHE FRIGGONO, I CONTI TORNANO SEMPRE, ANCHE QUANDO I CUORI SI AFFLIGGONO. CIFRE CHE SCORRONO SU VETRI SCURI, SILENZIOSE E AFFILATE, MENTRE FUORI LE OMBRE SI MUOVONO, SU STRADE DIMENTICATE. UN OCCHIO AL TERMINALE, L'ALTRO ALLA PORTA BLINDATA, LA MERCE È VITA, LA CASSA È LA NOSTRA SPADA AFFILATA. NON SERVONO NOMI, NON SERVONO TROPPE PAROLE, QUI IL BUSINESS FIORISCE LONTANO DAL RAGGIO DEL SOLE. UN CLIC, UNA VENDITA, UN ALTRO DROP CHE DECOLLA, MENTRE IL CODICE BRUCIA E LA CITTÀ SI CONTROLLA. UNDERGROUND NEL SANGUE, TK LABS NELLA MENTE, MUOVIAMO IL CAPITALE, RESTANDO NELL'OMBRA, SEGRETAMENTE."
+st.markdown(f'<div class="matrix-bar"><div class="matrix-text">*** {poesia} *** {poesia} ***</div></div>', unsafe_allow_html=True)
 
 # --- DB ENGINE ---
 DB_INV, DB_VEN = "db_inventario.json", "db_vendite.json"
@@ -179,50 +138,62 @@ def fragment_analisi():
         m2.metric("PROFITTO", f"€{df_s['profit'].sum():.2f}")
         st.dataframe(df_s.sort_index(ascending=False), use_container_width=True, hide_index=True)
         csv_data = df_s.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 SCARICA REPORT CSV", data=csv_data, file_name="report.csv", mime='text/csv', use_container_width=True)
+        st.download_button("📥 REPORT CSV", data=csv_data, file_name="report.csv", mime='text/csv', use_container_width=True)
     else: st.info("Nessun dato.")
 
 @st.fragment
 def fragment_strategia():
-    st.markdown("### 🧠 PROTOCOLLI DI CRESCITA")
+    st.markdown("### 🧠 ANALISI STRATEGICA REAL-TIME")
+    inv = st.session_state.inventory
+    
+    if not inv:
+        st.warning("Inventario vuoto. Impossibile calcolare strategie.")
+        return
+
+    # Calcolo Margini
+    for item in inv:
+        item['margin_val'] = item['price'] - item['cost']
+        item['margin_perc'] = (item['margin_val'] / item['price'] * 100) if item['price'] > 0 else 0
+
+    best_margin = max(inv, key=lambda x: x['margin_perc'])
+    worst_margin = min(inv, key=lambda x: x['margin_perc'])
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="strategy-card">
-            <h4>⚡ PROTOCOLLO BUNDLE</h4>
-            <p>Non vendere solo un prodotto. Crea pacchetti 'All-In'.<br>
-            <i>Esempio: 3 KIT + 2 Birre = 15% di sconto.</i><br>
-            Aumenta il valore medio dello scontrino del 30%.</p>
+            <h4>💎 IL TUO ASSET D'ORO</h4>
+            <p>Il prodotto <b>{best_margin['name']}</b> ha il margine più alto ({best_margin['margin_perc']:.1f}%).<br>
+            <b>STRATEGIA:</b> Spingilo come 'prodotto civetta'. Ogni volta che ne vendi uno, il tuo investimento cresce velocemente.</p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
+        st.markdown(f"""
         <div class="strategy-card">
-            <h4>⏳ EFFETTO SCARSITÀ</h4>
-            <p>Annuncia 'Drop Limitati'.<br>
-            <i>Messaggio: 'Solo 20 pezzi disponibili per questa zona'.</i><br>
-            L'urgenza spinge all'acquisto immediato senza trattative.</p>
+            <h4>🛠️ OTTIMIZZAZIONE PREZZI</h4>
+            <p>L'oggetto <b>{worst_margin['name']}</b> rende solo il {worst_margin['margin_perc']:.1f}%.<br>
+            <b>STRATEGIA:</b> Se è un prodotto ad alta rotazione, lascialo così. Se vende poco, alza il prezzo di almeno 1€ per coprire i costi operativi.</p>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("""
+        # Calcolo Bundling suggerito
+        st.markdown(f"""
         <div class="strategy-card">
-            <h4>🌑 OPERAZIONE SHADOW</h4>
-            <p>Fidelizza i grossi volumi.<br>
-            <i>Chi ordina più di 50 pezzi entra nel 'Tier 2' con prezzi dedicati.</i><br>
-            Assicura flussi di cassa costanti e prevedibili.</p>
+            <h4>📦 PROTOCOLLO COMBO</h4>
+            <p>Crea un bundle tra <b>{best_margin['name']}</b> e un altro oggetto.<br>
+            <b>LOGICA:</b> Usare l'alto margine del primo per assorbire un piccolo sconto sul secondo, aumentando il volume totale di cassa.</p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
+        # Analisi Capitale
+        capitale_bloccato = sum(item['cost'] * item['current_qty'] for item in inv)
+        st.markdown(f"""
         <div class="strategy-card">
-            <h4>🎯 UP-SELLING RAPIDO</h4>
-            <p>Al momento del pagamento, offri un add-on da 2€.<br>
-            <i>'Vuoi aggiungere un extra al kit con soli 2€?'</i><br>
-            È puro profitto netto con zero sforzo logistico.</p>
+            <h4>💰 STATO DEL PORTAFOGLIO</h4>
+            <p>Hai attualmente <b>€{capitale_bloccato:.2f}</b> di capitale bloccato in magazzino.<br>
+            <b>OBIETTIVO:</b> Trasformare questo stock in liquidità entro le prossime 48 ore tramite i 'Drop' online.</p>
         </div>
         """, unsafe_allow_html=True)
 
