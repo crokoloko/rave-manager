@@ -328,11 +328,23 @@ with tab_inventario:
         hide_index=True
     )
     
-    if st.button("💾 SALVA E AGGIORNA CASSA", type="primary"):
-        st.session_state.inventory_list = edited_df.to_dict('records')
-        salva_db_inventario()
-        st.success("Database aggiornato! La cassa ora riflette i nuovi prodotti.")
-        st.rerun()
+        if st.button("💾 SALVA E AGGIORNA CASSA", type="primary"):
+        # Preleva i dati dalla tabella
+        nuovi_dati = edited_df.to_dict('records')
+        
+        # Estrae tutti gli ID per controllare se ci sono doppioni
+        lista_id = [item['id'] for item in nuovi_dati]
+        
+        if len(lista_id) != len(set(lista_id)):
+            # Se trova doppioni, blocca il salvataggio e lancia l'allarme
+            st.error("❌ ERRORE DI SALVATAGGIO: Hai inserito due o più prodotti con lo STESSO ID! Controlla la prima colonna e assicurati che ogni riga abbia un ID completamente diverso (es. drink-1, drink-2).")
+        else:
+            # Se è tutto ok, salva
+            st.session_state.inventory_list = nuovi_dati
+            salva_db_inventario()
+            st.success("Database aggiornato! La cassa ora riflette i nuovi prodotti.")
+            st.rerun()
+
 
 # ==========================================
 # TAB 3: ANALISI E REPORT (CON ESPORTAZIONE)
