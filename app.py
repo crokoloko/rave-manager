@@ -8,7 +8,7 @@ from PIL import Image
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="TKLZ | UNDERGROUND POS",
+    page_title="TKLZ | UNDERGROUND ",
     page_icon="🦇",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -220,17 +220,41 @@ with tab3:
     if st.session_state.sales_history:
         df_s = pd.DataFrame(st.session_state.sales_history)
         
+        # Metriche principali
         m1, m2, m3 = st.columns(3)
         m1.metric("RICAVO TOTALE", f"{VALUTA_SIMBOLO}{df_s['revenue'].sum():.2f}")
         m2.metric("PROFITTO NETTO", f"{VALUTA_SIMBOLO}{df_s['profit'].sum():.2f}")
-        m3.metric("MARGINE %", f"{int((df_s['profit'].sum() / df_s['revenue'].sum()) * 100)}%")
+        m3.metric("MARGINE %", f"{int((df_s['profit'].sum() / df_s['revenue'].sum()) * 100) if df_s['revenue'].sum() > 0 else 0}%")
         
         st.divider()
         st.markdown("**REGISTRO TRANSAZIONI**")
         st.dataframe(df_s.sort_index(ascending=False), use_container_width=True, hide_index=True)
         
         st.divider()
+        
+        # --- SEZIONE CHIUSURA E RESET ---
+        st.markdown("#### 📥 OPERAZIONI DI CHIUSURA")
+        
+        # Pulsante Esporta Report
         csv = df_s.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 ESPORTA REPORT CSV", data=csv, file_name="report_tklz.csv", use_container_width=True)
+        st.download_button(
+            label="📥 1. SCARICA REPORT VENDITE (CSV)",
+            data=csv,
+            file_name=f"report_tklz_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            mime="text/csv",
+            use_container_width=True,
+            type="primary" # Mantiene il colore verde neon per l'azione principale
+        )
+        
+        # Spazio minimo tra i pulsanti
+        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+        
+        # Pulsante Reset Statistiche
+        if st.button("💀 2. AZZERA TUTTE LE STATISTICHE", use_container_width=True):
+            st.session_state.sales_history = []
+            salva_db_vendite()
+            st.toast("Cronologia vendite eliminata", icon="🗑️")
+            st.rerun()
+            
     else:
-        st.info("Ancora nessuna vendita registrata stasera.")
+        st.info("Ancora nessuna vendita registrata stasera. Il report sarà disponibile dopo la prima transazione.")
