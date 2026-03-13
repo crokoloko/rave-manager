@@ -8,16 +8,20 @@ from PIL import Image
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="TKLZ | MATRIX POS", layout="wide", initial_sidebar_state="collapsed")
 
-# --- STILE MATRIX & NEON ---
+# --- STILE MATRIX CENTRATO & NEON ---
 st.markdown("""
     <style>
     .stApp { background-color: #0a0a0a; color: #ffffff !important; }
-    h1, h2, h3, h4, p, label, .stMarkdown { color: #ffffff !important; font-family: 'Courier New', monospace !important; }
+    h1, h2, h3, h4, p, label, .stMarkdown { 
+        color: #ffffff !important; 
+        font-family: 'Courier New', monospace !important;
+        text-align: center; /* Centratura universale per i testi */
+    }
     
     /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
-    /* BARRA EFFETTO MATRIX */
+    /* BARRA EFFETTO MATRIX CENTRATA */
     .matrix-bar {
         background-color: #000000;
         border-top: 2px solid #00ff41;
@@ -29,15 +33,16 @@ st.markdown("""
         font-size: 16px;
         overflow: hidden;
         white-space: nowrap;
-        position: relative;
         margin-bottom: 15px;
         text-shadow: 0 0 8px #00ff41;
+        display: flex;
+        justify-content: center;
     }
     
     .matrix-text {
         display: inline-block;
         padding-left: 100%;
-        animation: matrix-scroll 20s linear infinite;
+        animation: matrix-scroll 25s linear infinite, flicker 2s infinite;
     }
 
     @keyframes matrix-scroll {
@@ -45,15 +50,16 @@ st.markdown("""
         100% { transform: translate(-100%, 0); }
     }
 
-    /* Effetto flickering sulle scritte Matrix */
-    .matrix-text {
-        animation: matrix-scroll 20s linear infinite, flicker 2s infinite;
-    }
-
     @keyframes flicker {
         0% { opacity: 1; }
         50% { opacity: 0.8; }
         100% { opacity: 1; }
+    }
+
+    /* Tabs Centrate */
+    .stTabs [data-baseweb="tab-list"] {
+        display: flex;
+        justify-content: center;
     }
 
     /* Bottoni Cassa */
@@ -65,6 +71,7 @@ st.markdown("""
         border-radius: 5px !important;
         font-weight: bold !important;
         transition: all 0.2s;
+        text-align: center;
     }
     .stButton>button:hover { 
         box-shadow: 0 0 15px #00ff41 !important;
@@ -72,16 +79,24 @@ st.markdown("""
         color: #000000 !important;
     }
     
+    /* Metriche Centrate */
+    [data-testid="stMetric"] {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
     header {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- INSERIMENTO BARRA MATRIX ---
+# --- INSERIMENTO BARRA MATRIX (3 Frasi) ---
+testo_matrix = "[SYSTEM: IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA.]"
 st.markdown(f"""
     <div class="matrix-bar">
         <div class="matrix-text">
-            [SYSTEM: IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA.] — 
-            [SYSTEM: IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA.]
+            {testo_matrix} — {testo_matrix} — {testo_matrix}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -153,7 +168,7 @@ def fragment_cassa():
                     st.write(f"**{qta}x** {p['name']} — **€{sub:.2f}**")
             st.divider()
             st.metric("TOTALE", f"€ {tot:.2f}")
-            if st.button("✅ CONFERMA PAGAMENTO", type="primary", use_container_width=True):
+            if st.button("✅ CONFERMA PAGAMENTO", type="primary", key="pay_btn"):
                 for id, qta in st.session_state.cart.items():
                     it = next((x for x in st.session_state.inventory if x["id"] == id), None)
                     if it:
@@ -166,7 +181,7 @@ def fragment_cassa():
                 st.session_state.cart = {}
                 st.toast("PAGATO ⚡")
                 st.rerun()
-            if st.button("🗑️ SVUOTA", use_container_width=True):
+            if st.button("🗑️ SVUOTA", key="clear_btn"):
                 st.session_state.cart = {}
                 st.rerun()
         else: st.info("Seleziona prodotti")
