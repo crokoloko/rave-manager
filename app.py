@@ -340,39 +340,37 @@ with tab_analisi:
         
         st.divider()
         
-        c1, c2 = st.columns([2, 1])
-        with c1:
-            df_sales['cumulative'] = df_sales['profit'].cumsum()
-            chart = alt.Chart(df_sales).mark_area(
-                line={'color':'#30d158'}, color=alt.Gradient(
-                    gradient='linear', stops=[alt.GradientStop(color='#30d158', offset=0), alt.GradientStop(color='#121212', offset=1)], x1=1, x2=1, y1=1, y2=0
-                )
-            ).encode(
-                x=alt.X('timestamp:T', title='TEMPO', axis=alt.Axis(grid=False)),
-                y=alt.Y('cumulative:Q', title='PROFITTO', axis=alt.Axis(grid=False))
-            ).properties(height=300)
-            st.altair_chart(chart, use_container_width=True)
+        # Registro vendite espanso a tutto schermo senza il grafico
+        st.markdown("**🧾 REGISTRO ULTIME VENDITE**")
+        st.dataframe(
+            df_sales[['timestamp', 'product_name', 'quantity', 'revenue', 'profit']].tail(15).sort_index(ascending=False), 
+            use_container_width=True, 
+            hide_index=True
+        )
             
-        with c2:
-            st.markdown("**ULTIME VENDITE**")
-            st.dataframe(df_sales[['timestamp', 'product_name', 'revenue']].tail(8).sort_index(ascending=False), use_container_width=True, hide_index=True)
-            
-        # --- ZONA ESPORTAZIONE IN FONDO ALLA PAGINA ---
+        # --- ZONA ESPORTAZIONE E RESET IN FONDO ALLA PAGINA ---
         st.divider()
-        st.markdown("#### 📥 ESPORTAZIONE DATI")
+        st.markdown("#### 📥 CHIUSURA SERATA")
         
         df_export = pd.DataFrame(st.session_state.sales_history)
         csv_data = df_export.to_csv(index=False).encode('utf-8')
         nome_file = f"chiusura_cassa_{datetime.now().strftime('%Y_%m_%d')}.csv"
         
         st.download_button(
-            label="📥 ESPORTA REPORT A FINE SERATA (CSV)",
+            label="📥 1. ESPORTA REPORT A FINE SERATA (CSV)",
             data=csv_data,
             file_name=nome_file,
             mime="text/csv",
             type="primary",
             use_container_width=True
         )
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("💀 2. AZZERA STATISTICHE VENDITE", use_container_width=True):
+            st.session_state.sales_history = []
+            salva_db_vendite()
+            st.rerun()
             
     else:
-        st.info("Nessuna transazione registrata. Inizia a vendere per popolare i grafici.")
+        st.info("Nessuna transazione registrata. Inizia a vendere per popolare le metriche.")
