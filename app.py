@@ -22,6 +22,12 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
+    /* Smussa gli angoli del logo per uniformarlo al design */
+    [data-testid="stImage"] img {
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+    
     .stButton>button {
         width: 100%;
         height: 100px;
@@ -193,12 +199,17 @@ with st.sidebar:
         del st.session_state.db_caricato
         st.rerun()
 
-# --- MAIN UI ---
-st.markdown("""
-    <h2 style='text-align: center; color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; margin-bottom: 20px;'>
-        🦇 TKLZ
-    </h2>
-""", unsafe_allow_html=True)
+# --- MAIN UI (LOGO GRAFFITO) ---
+# Usa 3 colonne per spingere il logo al centro. Modifica i numeri se lo vuoi più grande o più piccolo.
+col_vuota_sinistra, col_logo, col_vuota_destra = st.columns([1.5, 2, 1.5])
+with col_logo:
+    try:
+        st.image("logo.jpg", use_container_width=True)
+    except:
+        # Fallback nel caso in cui l'immagine non venga trovata
+        st.markdown("<h3 style='text-align:center; color:red;'>⚠️ Immagine 'logo.jpg' non trovata</h3>", unsafe_allow_html=True)
+        
+st.markdown("<br>", unsafe_allow_html=True)
 
 tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
 
@@ -212,18 +223,15 @@ with tab_cassa:
         st.markdown("#### 🛒 TERMINALE OPERATIVO")
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Recupera tutti i prodotti dell'inventario
         tutti_i_prodotti = st.session_state.inventory_list
-        NUM_COLONNE = 3  # Puoi cambiare questo numero per modificare i bottoni per riga
+        NUM_COLONNE = 3
         
-        # Genera una griglia perfetta riga per riga
         for i in range(0, len(tutti_i_prodotti), NUM_COLONNE):
             righe_colonne = st.columns(NUM_COLONNE)
             
             for j, col in enumerate(righe_colonne):
                 indice_prodotto = i + j
                 
-                # Se c'è un prodotto per questa posizione, crea il bottone
                 if indice_prodotto < len(tutti_i_prodotti):
                     item = tutti_i_prodotti[indice_prodotto]
                     with col:
@@ -233,7 +241,7 @@ with tab_cassa:
                             key=f"btn_cassa_{item['id']}", 
                             on_click=aggiungi_al_carrello, 
                             args=(item["id"],),
-                            use_container_width=True # Forza l'allineamento ai bordi
+                            use_container_width=True
                         )
 
     with col_receipt:
@@ -306,7 +314,6 @@ with tab_inventario:
         nuovi_dati = edited_df.to_dict('records')
         lista_id = [item['id'] for item in nuovi_dati if item['id']]
         
-        # Controllo di sicurezza per evitare errori critici di ID duplicati
         if len(lista_id) != len(set(lista_id)):
             st.error("❌ ERRORE: Hai inserito due o più prodotti con lo STESSO ID! Modifica la prima colonna in modo che ogni ID sia diverso (es. kit-1, kit-2).")
         else:
@@ -340,7 +347,6 @@ with tab_analisi:
         
         st.divider()
         
-        # Registro vendite espanso a tutto schermo senza il grafico
         st.markdown("**🧾 REGISTRO ULTIME VENDITE**")
         st.dataframe(
             df_sales[['timestamp', 'product_name', 'quantity', 'revenue', 'profit']].tail(15).sort_index(ascending=False), 
