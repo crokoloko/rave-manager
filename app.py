@@ -95,7 +95,7 @@ def carica_db():
             st.session_state.inventory_list = json.load(f)
     else:
         st.session_state.inventory_list = [
-            {"id": "kit-1", "name": "🔥 KIT Leash", "cost": 0.80, "price": 5.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
+            {"id": "kit-1", "name": "🔥 KIT Accendino", "cost": 0.80, "price": 4.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
             {"id": "vent-1", "name": "🌬️ Ventaglio", "cost": 0.80, "price": 5.0, "initial_qty": 150, "current_qty": 150, "is_bundle": False},
             {"id": "tapp-1", "name": "👂 Tappi", "cost": 0.05, "price": 1.0, "initial_qty": 1000, "current_qty": 1000, "is_bundle": False},
             {"id": "glow-1", "name": "✨ Glow Stick", "cost": 0.10, "price": 1.0, "initial_qty": 500, "current_qty": 500, "is_bundle": False},
