@@ -26,16 +26,16 @@ st.markdown("""
     /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
-    /* BARRA MATRIX */
+    /* BARRA MATRIX CON POESIA */
     .matrix-bar {
         background-color: #000000;
         border-top: 2px solid #00ff41;
         border-bottom: 2px solid #00ff41;
         color: #00ff41;
-        padding: 8px 0;
+        padding: 10px 0;
         font-weight: bold;
         font-family: 'Courier New', monospace;
-        font-size: 16px;
+        font-size: 15px;
         overflow: hidden;
         white-space: nowrap;
         margin-bottom: 15px;
@@ -47,7 +47,7 @@ st.markdown("""
     .matrix-text {
         display: inline-block;
         padding-left: 100%;
-        animation: matrix-scroll 25s linear infinite, flicker 2s infinite;
+        animation: matrix-scroll 40s linear infinite, flicker 2s infinite;
     }
 
     @keyframes matrix-scroll { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
@@ -56,7 +56,6 @@ st.markdown("""
     /* Centratura Tabs e Contenuto */
     .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: center; }
     
-    /* Centratura specifica per la Cassa (Shop e Ordine) */
     [data-testid="column"] {
         display: flex;
         flex-direction: column;
@@ -91,20 +90,17 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- BARRA MATRIX ---
-frase = "Nella penombra del magazzino, tra i neon che friggono,
-i conti tornano sempre, anche quando i cuori si affliggono.
-Cifre che scorrono su vetri scuri, silenziose e affilate,
-mentre fuori le ombre si muovono, su strade dimenticate.
-​Un occhio al terminale, l'altro alla porta blindata,
-la merce è vita, la cassa è la nostra spada affilata.
-Non servono nomi, non servono troppe parole,
-qui il business fiorisce lontano dal raggio del sole.
-​Un clic, una vendita, un altro drop che decolla,
-mentre il codice brucia e la città si controlla.
-Underground nel sangue, TK Labs nella mente,
-muoviamo il capitale, restando nell'ombra, segretamente."
-st.markdown(f'<div class="matrix-bar"><div class="matrix-text">[{frase}] — [{frase}] — [{frase}]</div></div>', unsafe_allow_html=True)
+# --- INSERIMENTO BARRA MATRIX (POESIA) ---
+poesia = (
+    "Nella penombra del magazzino, tra i neon che friggono, i conti tornano sempre, anche quando i cuori si affliggono. "
+    "Cifre che scorrono su vetri scuri, silenziose e affilate, mentre fuori le ombre si muovono, su strade dimenticate. "
+    "Un occhio al terminale, l'altro alla porta blindata, la merce è vita, la cassa è la nostra spada affilata. "
+    "Non servono nomi, non servono troppe parole, qui il business fiorisce lontano dal raggio del sole. "
+    "Un clic, una vendita, un altro drop che decolla, mentre il codice brucia e la città si controlla. "
+    "Underground nel sangue, TK Labs nella mente, muoviamo il capitale, restando nell'ombra, segretamente."
+)
+
+st.markdown(f'<div class="matrix-bar"><div class="matrix-text">*** {poesia} *** {poesia} ***</div></div>', unsafe_allow_html=True)
 
 # --- DB ENGINE ---
 DB_INV, DB_VEN = "db_inventario.json", "db_vendite.json"
