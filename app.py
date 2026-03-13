@@ -6,9 +6,9 @@ import os
 from PIL import Image
 
 # --- CONFIGURAZIONE ---
-st.set_page_config(page_title="TKLZ | TURBO POS", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="TKLZ | MATRIX POS", layout="wide", initial_sidebar_state="collapsed")
 
-# --- STILE OTTIMIZZATO & MARQUEE ---
+# --- STILE MATRIX & NEON ---
 st.markdown("""
     <style>
     .stApp { background-color: #0a0a0a; color: #ffffff !important; }
@@ -17,61 +17,74 @@ st.markdown("""
     /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
-    /* BARRA SCORREVOLE GIALLA */
-    .marquee-container {
-        background-color: #ffff00;
-        color: #000000;
-        padding: 5px 0;
+    /* BARRA EFFETTO MATRIX */
+    .matrix-bar {
+        background-color: #000000;
+        border-top: 2px solid #00ff41;
+        border-bottom: 2px solid #00ff41;
+        color: #00ff41;
+        padding: 8px 0;
         font-weight: bold;
         font-family: 'Courier New', monospace;
-        font-size: 14px;
+        font-size: 16px;
         overflow: hidden;
         white-space: nowrap;
         position: relative;
-        margin-bottom: 10px;
-        border-radius: 5px;
+        margin-bottom: 15px;
+        text-shadow: 0 0 8px #00ff41;
     }
-    .marquee-text {
+    
+    .matrix-text {
         display: inline-block;
         padding-left: 100%;
-        animation: marquee 15s linear infinite;
+        animation: matrix-scroll 20s linear infinite;
     }
-    @keyframes marquee {
+
+    @keyframes matrix-scroll {
         0%   { transform: translate(0, 0); }
         100% { transform: translate(-100%, 0); }
     }
 
-    /* Bottoni Cassa */
-    .stButton>button {
-        width: 100%; height: 80px;
-        background: rgba(35, 35, 35, 0.9) !important;
-        border: 1px solid #444 !important;
-        color: #ffffff !important;
-        border-radius: 12px !important;
-        font-weight: bold !important; font-size: 16px !important;
-        transition: transform 0.1s;
-    }
-    .stButton>button:active { transform: scale(0.95); }
-    .stButton>button:hover { border-color: #ff00ff !important; box-shadow: 0 0 15px #ff00ff !important; }
-    
-    div.stButton > button[kind="primary"] { 
-        background: rgba(48, 209, 88, 0.3) !important; 
-        border: 2px solid #30d158 !important; 
-    }
-    
-    .btn-reset > div > button {
-        background: rgba(255, 69, 58, 0.2) !important;
-        border: 1px solid #ff453a !important;
-        color: #ff453a !important;
-        height: 50px !important;
+    /* Effetto flickering sulle scritte Matrix */
+    .matrix-text {
+        animation: matrix-scroll 20s linear infinite, flicker 2s infinite;
     }
 
+    @keyframes flicker {
+        0% { opacity: 1; }
+        50% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+
+    /* Bottoni Cassa */
+    .stButton>button {
+        width: 100%; height: 85px;
+        background: rgba(20, 20, 20, 0.9) !important;
+        border: 1px solid #00ff41 !important;
+        color: #ffffff !important;
+        border-radius: 5px !important;
+        font-weight: bold !important;
+        transition: all 0.2s;
+    }
+    .stButton>button:hover { 
+        box-shadow: 0 0 15px #00ff41 !important;
+        background: #00ff41 !important;
+        color: #000000 !important;
+    }
+    
     header {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- INSERIMENTO BARRA SCORREVOLE ---
-st.markdown('<div class="marquee-container"><div class="marquee-text">SESSO , DROGA E NUN CAGAR U CAZZ! — SESSO , DROGA E NUN CAGAR U CAZZ! — SESSO , DROGA E NUN CAGAR U CAZZ!</div></div>', unsafe_allow_html=True)
+# --- INSERIMENTO BARRA MATRIX ---
+st.markdown(f"""
+    <div class="matrix-bar">
+        <div class="matrix-text">
+            [SYSTEM: IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA.] — 
+            [SYSTEM: IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA.]
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- DATABASE ENGINE ---
 DB_INV = "db_inventario.json"
@@ -110,7 +123,7 @@ try:
     _, mid, _ = st.columns([1, 3, 1])
     mid.image(img, use_container_width=True)
 except:
-    st.markdown("<h1 style='text-align:center; color:#ff00ff;'>TKLZ</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#00ff41;'>TKLZ</h1>", unsafe_allow_html=True)
 
 # --- UI COMPONENTS ---
 
@@ -188,15 +201,13 @@ def fragment_analisi():
         col_exp, col_res = st.columns(2)
         with col_exp:
             csv = df_s.to_csv(index=False).encode('utf-8')
-            st.download_button(label="📥 ESPORTA REPORT .CSV", data=csv, file_name=f"report_tklz_{datetime.now().strftime('%d_%m_%Y')}.csv", mime="text/csv", use_container_width=True)
+            st.download_button(label="📥 ESPORTA REPORT .CSV", data=csv, file_name=f"report_tklz.csv", mime="text/csv", use_container_width=True)
         with col_res:
-            st.markdown('<div class="btn-reset">', unsafe_allow_html=True)
             if st.button("💀 AZZERA DATI VENDITE", use_container_width=True):
                 st.session_state.sales = []
                 if os.path.exists(DB_VEN): os.remove(DB_VEN)
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-    else: st.info("Nessuna vendita registrata.")
+    else: st.info("Nessuna vendita.")
 
 # --- TABS ---
 t1, t2, t3 = st.tabs(["⚡ CASSA", "📦 STOCK", "📈 FINANZA"])
