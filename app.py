@@ -26,7 +26,7 @@ st.markdown("""
     /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
-    /* BARRA MATRIX CON POESIA */
+    /* BARRA MATRIX CON POESIA RALLENTATA (80s) */
     .matrix-bar {
         background-color: #000000;
         border-top: 2px solid #00ff41;
@@ -47,7 +47,8 @@ st.markdown("""
     .matrix-text {
         display: inline-block;
         padding-left: 100%;
-        animation: matrix-scroll 40s linear infinite, flicker 2s infinite;
+        /* Velocità raddoppiata: da 40s a 80s */
+        animation: matrix-scroll 80s linear infinite, flicker 2s infinite;
     }
 
     @keyframes matrix-scroll { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
