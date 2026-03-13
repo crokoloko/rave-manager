@@ -26,7 +26,7 @@ st.markdown("""
     /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
-    /* BARRA MATRIX CON POESIA RALLENTATA (80s) */
+    /* BARRA MATRIX CON POESIA MAIUSCOLA RALLENTATA */
     .matrix-bar {
         background-color: #000000;
         border-top: 2px solid #00ff41;
@@ -47,7 +47,6 @@ st.markdown("""
     .matrix-text {
         display: inline-block;
         padding-left: 100%;
-        /* Velocità raddoppiata: da 40s a 80s */
         animation: matrix-scroll 80s linear infinite, flicker 2s infinite;
     }
 
@@ -91,17 +90,17 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- INSERIMENTO BARRA MATRIX (POESIA) ---
-poesia = (
-    "Nella penombra del magazzino, tra i neon che friggono, i conti tornano sempre, anche quando i cuori si affliggono. "
-    "Cifre che scorrono su vetri scuri, silenziose e affilate, mentre fuori le ombre si muovono, su strade dimenticate. "
-    "Un occhio al terminale, l'altro alla porta blindata, la merce è vita, la cassa è la nostra spada affilata. "
-    "Non servono nomi, non servono troppe parole, qui il business fiorisce lontano dal raggio del sole. "
-    "Un clic, una vendita, un altro drop che decolla, mentre il codice brucia e la città si controlla. "
-    "Underground nel sangue, TK Labs nella mente, muoviamo il capitale, restando nell'ombra, segretamente."
+# --- INSERIMENTO BARRA MATRIX (POESIA MAIUSCOLA) ---
+poesia_maiuscola = (
+    "NELLA PENOMBRA DEL MAGAZZINO, TRA I NEON CHE FRIGGONO, I CONTI TORNANO SEMPRE, ANCHE QUANDO I CUORI SI AFFLIGGONO. "
+    "CIFRE CHE SCORRONO SU VETRI SCURI, SILENZIOSE E AFFILATE, MENTRE FUORI LE OMBRE SI MUOVONO, SU STRADE DIMENTICATE. "
+    "UN OCCHIO AL TERMINALE, L'ALTRO ALLA PORTA BLINDATA, LA MERCE È VITA, LA CASSA È LA NOSTRA SPADA AFFILATA. "
+    "NON SERVONO NOMI, NON SERVONO TROPPE PAROLE, QUI IL BUSINESS FIORISCE LONTANO DAL RAGGIO DEL SOLE. "
+    "UN CLIC, UNA VENDITA, UN ALTRO DROP CHE DECOLLA, MENTRE IL CODICE BRUCIA E LA CITTÀ SI CONTROLLA. "
+    "UNDERGROUND NEL SANGUE, TK LABS NELLA MENTE, MUOVIAMO IL CAPITALE, RESTANDO NELL'OMBRA, SEGRETAMENTE."
 )
 
-st.markdown(f'<div class="matrix-bar"><div class="matrix-text">*** {poesia} *** {poesia} ***</div></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="matrix-bar"><div class="matrix-text">*** {poesia_maiuscola} *** {poesia_maiuscola} ***</div></div>', unsafe_allow_html=True)
 
 # --- DB ENGINE ---
 DB_INV, DB_VEN = "db_inventario.json", "db_vendite.json"
