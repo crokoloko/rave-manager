@@ -48,7 +48,9 @@ DB_VEN = "db_vendite.json"
 def carica_db():
     if 'inventory' not in st.session_state:
         if os.path.exists(DB_INV):
-            with open(DB_INV, "r") as f: st.session_state.inventory = json.load(f)
+            try:
+                with open(DB_INV, "r") as f: st.session_state.inventory = json.load(f)
+            except: st.session_state.inventory = []
         else:
             st.session_state.inventory = [
                 {"id": "k1", "name": "🔥 KIT Leash", "cost": 0.8, "price": 5.0, "current_qty": 400},
@@ -56,10 +58,14 @@ def carica_db():
             ]
     if 'sales' not in st.session_state:
         if os.path.exists(DB_VEN):
-            with open(DB_VEN, "r") as f:
-                v = json.load(f)
-                for x in v: x['timestamp'] = datetime.fromisoformat(x['timestamp'])
-                st.session_state.sales = v
+            try:
+                with open(DB_VEN, "r") as f:
+                    v = json.load(f)
+                    for x in v: 
+                        if isinstance(x['timestamp'], str):
+                            x['timestamp'] = datetime.fromisoformat(x['timestamp'])
+                    st.session_state.sales = v
+            except: st.session_state.sales = []
         else: st.session_state.sales = []
 
 carica_db()
@@ -76,13 +82,18 @@ def checkout():
             it["current_qty"] -= qta
             rev = it["price"] * qta
             st.session_state.sales.append({
-                "timestamp": datetime.now().isoformat(), "product": it["name"],
+                "timestamp": datetime.now(), "product": it["name"],
                 "qta": qta, "revenue": rev, "profit": rev - (it["cost"] * qta)
             })
     with open(DB_INV, "w") as f: json.dump(st.session_state.inventory, f)
-    with open(DB_VEN, "w") as f: 
-        s_save = [dict(x, timestamp=str(x['timestamp'])) if isinstance(x['timestamp'], datetime) else x for x in st.session_state.sales]
-        json.dump(s_save, f)
+    # Serializzazione corretta per il JSON
+    sales_to_save = []
+    for s in st.session_state.sales:
+        s_copy = s.copy()
+        if isinstance(s_copy['timestamp'], datetime):
+            s_copy['timestamp'] = s_copy['timestamp'].isoformat()
+        sales_to_save.append(s_copy)
+    with open(DB_VEN, "w") as f: json.dump(sales_to_save, f)
     st.session_state.cart = {}
     st.toast("PAGATO ⚡")
 
@@ -106,8 +117,8 @@ with t1:
             for j in range(3):
                 if i + j < len(inv):
                     p = inv[i + j]
-                    # CHIAVE UNICA PROTETTA: id + indice
-                    if cols[j].button(f"{p['name']}\n€{p['price']:.2f}", key=f"btn_{p['id']}_{i+j}"):
+                    # Chiave protetta
+                    if cols[j].button(f"{p['name']}\n€{p['price']:.2f}", key=f"pos_{p['id']}_{i+j}"):
                         add_to_cart(p['id'])
                         st.rerun()
     with c_r:
@@ -125,23 +136,35 @@ with t1:
         if st.button("🗑️ SVUOTA", use_container_width=True): st.session_state.cart = {}; st.rerun()
 
 with t2:
-    st.markdown("### 📦 STOCK")
+    st.markdown("### 📦 GESTIONE STOCK")
     df_inv = pd.DataFrame(st.session_state.inventory)
-    edited = st.data_editor(df_inv, num_rows="dynamic", use_container_width=True, hide_index=True)
-    if st.button("💾 SALVA STOCK", type="primary", use_container_width=True):
-        st.session_state.inventory = edited.to_dict('records')
-        with open(DB_INV, "w") as f: json.dump(st.session_state.inventory, f)
-        st.success("Salvo!")
-        st.rerun()
+    edited = st.data_editor(df_inv, num_rows="dynamic", use_container_width=True, hide_index=True, key="editor_stock")
+    
+    col_save, col_reset = st.columns(2)
+    with col_save:
+        if st.button("💾 SALVA MODIFICHE", type="primary", use_container_width=True):
+            st.session_state.inventory = edited.to_dict('records')
+            with open(DB_INV, "w") as f: json.dump(st.session_state.inventory, f)
+            st.success("Dati aggiornati!")
+            st.rerun()
+    
+    with col_reset:
+        # PULSANTE DI RESET RICHIESTO
+        if st.button("⚠️ RESET TOTALE DATABASE", use_container_width=True):
+            if os.path.exists(DB_INV): os.remove(DB_INV)
+            if os.path.exists(DB_VEN): os.remove(DB_VEN)
+            st.session_state.clear()
+            st.warning("Database eliminato. Riavvio in corso...")
+            st.rerun()
 
 with t3:
-    st.markdown("### 📈 ANALISI")
+    st.markdown("### 📈 ANALISI RENDIMENTO")
     if st.session_state.sales:
         df_s = pd.DataFrame(st.session_state.sales)
         c_a, c_b = st.columns(2)
-        c_a.metric("INCASSI", f"€{sum(x['revenue'] for x in st.session_state.sales):.2f}")
-        c_b.metric("PROFITTO", f"€{sum(x['profit'] for x in st.session_state.sales):.2f}")
-        st.dataframe(df_s, use_container_width=True)
+        c_a.metric("INCASSI", f"€{df_s['revenue'].sum():.2f}")
+        c_b.metric("PROFITTO NETTO", f"€{df_s['profit'].sum():.2f}")
+        st.dataframe(df_s, use_container_width=True, hide_index=True)
         csv = df_s.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 SCARICA REPORT", data=csv, file_name="report.csv", use_container_width=True)
-    else: st.info("Nessun dato")
+        st.download_button("📥 SCARICA REPORT CSV", data=csv, file_name="report_tklz.csv", use_container_width=True)
+    else: st.info("Nessuna vendita registrata.")
