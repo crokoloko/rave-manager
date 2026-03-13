@@ -13,7 +13,6 @@ st.markdown("""
     <style>
     .stApp { background-color: #0a0a0a; color: #ffffff !important; }
     
-    /* Centratura Universale */
     h1, h2, h3, h4, p, label, .stMarkdown, [data-testid="stMarkdownContainer"] { 
         color: #ffffff !important; 
         font-family: 'Courier New', monospace !important;
@@ -23,10 +22,8 @@ st.markdown("""
         width: 100%;
     }
     
-    /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
-    /* BARRA MATRIX CON POESIA MAIUSCOLA RALLENTATA */
     .matrix-bar {
         background-color: #000000;
         border-top: 2px solid #00ff41;
@@ -53,17 +50,10 @@ st.markdown("""
     @keyframes matrix-scroll { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
     @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-    /* Centratura Tabs e Contenuto */
-    .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: center; }
+    .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: center; gap: 20px; }
     
-    [data-testid="column"] {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-    }
+    [data-testid="column"] { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
 
-    /* Bottoni Cassa */
     .stButton>button {
         width: 100%; height: 85px;
         background: rgba(20, 20, 20, 0.9) !important;
@@ -80,31 +70,32 @@ st.markdown("""
         color: #000000 !important;
     }
     
-    /* Metriche Centrate */
-    [data-testid="stMetric"] {
-        text-align: center !important;
-        align-items: center !important;
+    /* Box Strategia */
+    .strategy-card {
+        border: 1px solid #00ff41;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px;
+        background: rgba(0, 255, 65, 0.05);
     }
 
     header {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- INSERIMENTO BARRA MATRIX (POESIA MAIUSCOLA) ---
+# --- POESIA MAIUSCOLA ---
 poesia_maiuscola = (
     "NELLA PENOMBRA DEL MAGAZZINO, TRA I NEON CHE FRIGGONO, I CONTI TORNANO SEMPRE, ANCHE QUANDO I CUORI SI AFFLIGGONO. "
     "CIFRE CHE SCORRONO SU VETRI SCURI, SILENZIOSE E AFFILATE, MENTRE FUORI LE OMBRE SI MUOVONO, SU STRADE DIMENTICATE. "
     "UN OCCHIO AL TERMINALE, L'ALTRO ALLA PORTA BLINDATA, LA MERCE È VITA, LA CASSA È LA NOSTRA SPADA AFFILATA. "
-    "NON SERVONO NOMI, NON SERVONO TROPPE PAROLE, QUI IL BUSINESS FIORISCE LONTANO DAL RAGGIO DEL SOLE. "
+    "NON SERVONO NOMI, NON SERVONO TROPPE PAROLE, QUI IL BUSINESS FIORICE LONTANO DAL RAGGIO DEL SOLE. "
     "UN CLIC, UNA VENDITA, UN ALTRO DROP CHE DECOLLA, MENTRE IL CODICE BRUCIA E LA CITTÀ SI CONTROLLA. "
     "UNDERGROUND NEL SANGUE, TK LABS NELLA MENTE, MUOVIAMO IL CAPITALE, RESTANDO NELL'OMBRA, SEGRETAMENTE."
 )
-
 st.markdown(f'<div class="matrix-bar"><div class="matrix-text">*** {poesia_maiuscola} *** {poesia_maiuscola} ***</div></div>', unsafe_allow_html=True)
 
 # --- DB ENGINE ---
 DB_INV, DB_VEN = "db_inventario.json", "db_vendite.json"
-
 def carica_dati():
     if 'inventory' not in st.session_state:
         if os.path.exists(DB_INV):
@@ -119,7 +110,6 @@ def carica_dati():
                     if isinstance(x['timestamp'], str): x['timestamp'] = datetime.fromisoformat(x['timestamp'])
                 st.session_state.sales = v
         else: st.session_state.sales = []
-
 carica_dati()
 if 'cart' not in st.session_state: st.session_state.cart = {}
 
@@ -175,39 +165,70 @@ def fragment_stock():
     st.markdown("### 📦 STOCK")
     df_inv = pd.DataFrame(st.session_state.inventory)
     edited = st.data_editor(df_inv, num_rows="dynamic", use_container_width=True, hide_index=True)
-    c1, c2 = st.columns(2)
-    if c1.button("💾 SALVA"):
+    if st.button("💾 SALVA MODIFICHE"):
         st.session_state.inventory = edited.to_dict('records')
-        save_all(); st.success("Salvato"); st.rerun()
-    if c2.button("⚠️ RESET DB"):
-        if os.path.exists(DB_INV): os.remove(DB_INV)
-        if os.path.exists(DB_VEN): os.remove(DB_VEN)
-        st.session_state.clear(); st.rerun()
+        save_all(); st.success("Database Aggiornato"); st.rerun()
 
 @st.fragment
 def fragment_analisi():
-    st.markdown("### 📈 ANALISI FINANZIARIA")
+    st.markdown("### 📈 FINANZA")
     if st.session_state.sales:
         df_s = pd.DataFrame(st.session_state.sales)
         m1, m2 = st.columns(2)
         m1.metric("INCASSI", f"€{df_s['revenue'].sum():.2f}")
         m2.metric("PROFITTO", f"€{df_s['profit'].sum():.2f}")
         st.dataframe(df_s.sort_index(ascending=False), use_container_width=True, hide_index=True)
-        st.divider()
-        st.markdown("#### ⚙️ PANNELLO CONTROLLO")
         csv_data = df_s.to_csv(index=False).encode('utf-8')
-        col_exp, col_res = st.columns(2)
-        with col_exp:
-            st.download_button(label="📥 SCARICA CSV", data=csv_data, file_name=f"report.csv", mime='text/csv', use_container_width=True)
-        with col_res:
-            if st.button("💀 AZZERA VENDITE", use_container_width=True):
-                st.session_state.sales = []
-                if os.path.exists(DB_VEN): os.remove(DB_VEN)
-                st.rerun()
-    else: st.info("Nessuna vendita.")
+        st.download_button("📥 SCARICA REPORT CSV", data=csv_data, file_name="report.csv", mime='text/csv', use_container_width=True)
+    else: st.info("Nessun dato.")
+
+@st.fragment
+def fragment_strategia():
+    st.markdown("### 🧠 PROTOCOLLI DI CRESCITA")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div class="strategy-card">
+            <h4>⚡ PROTOCOLLO BUNDLE</h4>
+            <p>Non vendere solo un prodotto. Crea pacchetti 'All-In'.<br>
+            <i>Esempio: 3 KIT + 2 Birre = 15% di sconto.</i><br>
+            Aumenta il valore medio dello scontrino del 30%.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="strategy-card">
+            <h4>⏳ EFFETTO SCARSITÀ</h4>
+            <p>Annuncia 'Drop Limitati'.<br>
+            <i>Messaggio: 'Solo 20 pezzi disponibili per questa zona'.</i><br>
+            L'urgenza spinge all'acquisto immediato senza trattative.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="strategy-card">
+            <h4>🌑 OPERAZIONE SHADOW</h4>
+            <p>Fidelizza i grossi volumi.<br>
+            <i>Chi ordina più di 50 pezzi entra nel 'Tier 2' con prezzi dedicati.</i><br>
+            Assicura flussi di cassa costanti e prevedibili.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="strategy-card">
+            <h4>🎯 UP-SELLING RAPIDO</h4>
+            <p>Al momento del pagamento, offri un add-on da 2€.<br>
+            <i>'Vuoi aggiungere un extra al kit con soli 2€?'</i><br>
+            È puro profitto netto con zero sforzo logistico.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- TABS ---
-t1, t2, t3 = st.tabs(["⚡ CASSA", "📦 STOCK", "📈 FINANZA"])
+t1, t2, t3, t4 = st.tabs(["⚡ CASSA", "📦 STOCK", "📈 FINANZA", "🧠 STRATEGIA"])
 with t1: fragment_cassa()
 with t2: fragment_stock()
 with t3: fragment_analisi()
+with t4: fragment_strategia()
