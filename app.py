@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import altair as alt
+import json
+import os
+
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
