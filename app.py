@@ -4,73 +4,107 @@ from datetime import datetime
 import altair as alt
 import json
 import os
+from PIL import Image
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="TKLZ | POS Terminal",
+    page_title="TKLZ | UNDERGROUND POS",
     page_icon="🦇",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- TEMA CLEAN & MINIMAL (CSS) ---
+# --- TEMA CYBER-PUNK & NEON (CSS AVANZATO) ---
 st.markdown("""
     <style>
+    /* Sfondo e Font Generale */
     .stApp {
-        background-color: #121212;
-        color: #f5f5f7;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #0a0a0a;
+        color: #e0e0e0;
     }
     
-    /* Smussa gli angoli del logo per uniformarlo al design */
-    [data-testid="stImage"] img {
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    /* Titoli e Testi */
+    h1, h2, h3, h4, p {
+        font-family: 'Courier New', Courier, monospace !important;
     }
-    
+
+    /* Rimozione spazi vuoti intorno al Logo */
+    [data-testid="stImage"] {
+        display: flex;
+        justify-content: center;
+        padding: 0 !important;
+        margin: -20px 0 -10px 0 !important; /* Riduce i margini sopra e sotto */
+    }
+
+    /* Pulsanti Prodotto - Effetto Neon Glow */
     .stButton>button {
         width: 100%;
-        height: 100px;
-        font-size: 20px !important;
-        font-weight: 600;
-        border-radius: 12px;
-        background-color: #1e1e1e;
-        border: 1px solid #2d2d2d;
-        color: #f5f5f7;
-        transition: all 0.2s ease-in-out;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 110px;
+        background: rgba(30, 30, 30, 0.6) !important;
+        border: 1px solid #444 !important;
+        color: #00ffbc !important; /* Colore base Neon Cyan/Verde */
+        border-radius: 15px !important;
+        font-weight: bold !important;
+        transition: all 0.3s ease-in-out !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
     .stButton>button:hover {
-        transform: translateY(-2px);
-        background-color: #2a2a2a;
-        border-color: #555555;
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        border-color: #ff00ff !important; /* Cambia in Rosa Fluo su hover */
+        box-shadow: 0 0 15px #ff00ff, inset 0 0 5px #ff00ff !important;
+        transform: scale(1.02);
+        color: #ffffff !important;
     }
 
+    /* Bottone Paga - Verde Tossico */
     div.stButton > button[kind="primary"] {
-        background-color: #30d158;
-        color: #ffffff;
-        border: none;
-        box-shadow: 0 4px 10px rgba(48, 209, 88, 0.2);
-    }
-    div.stButton > button[kind="primary"]:hover {
-        background-color: #2db34c;
-        color: #ffffff;
-    }
-
-    div[data-testid="metric-container"] {
-        background-color: #1e1e1e;
-        border: 1px solid #2d2d2d;
-        padding: 15px;
-        border-radius: 12px;
+        background: rgba(48, 209, 88, 0.2) !important;
+        border: 2px solid #30d158 !important;
+        color: #30d158 !important;
+        box-shadow: 0 0 10px rgba(48, 209, 88, 0.4) !important;
     }
     
+    div.stButton > button[kind="primary"]:hover {
+        background: #30d158 !important;
+        color: #000 !important;
+        box-shadow: 0 0 25px #30d158 !important;
+    }
+
+    /* Carrello Glassmorphism */
+    [data-testid="stVerticalBlock"] > div:has(div.stMetric) {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Tabs Style */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background-color: #1a1a1a !important;
+        border-radius: 10px 10px 0 0 !important;
+        color: #888 !important;
+        border: none !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: #ff00ff !important;
+        border-bottom: 2px solid #ff00ff !important;
+    }
+
+    /* Nasconde Header Streamlit */
     header {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- COSTANTI E DATABASE ---
+# --- LOGICA DATABASE ---
 VALUTA_SIMBOLO = "€"
 DB_INVENTARIO = "db_inventario.json"
 DB_VENDITE = "db_vendite.json"
@@ -86,7 +120,6 @@ def salva_db_vendite():
         if isinstance(v_copy['timestamp'], datetime):
             v_copy['timestamp'] = v_copy['timestamp'].isoformat()
         vendite_serializzabili.append(v_copy)
-        
     with open(DB_VENDITE, "w", encoding="utf-8") as f:
         json.dump(vendite_serializzabili, f, indent=4, ensure_ascii=False)
 
@@ -96,18 +129,15 @@ def carica_db():
             st.session_state.inventory_list = json.load(f)
     else:
         st.session_state.inventory_list = [
-            {"id": "drink-1", "name": "🍺 Birra", "cost": 1.00, "price": 5.0, "initial_qty": 200, "current_qty": 200, "is_bundle": False},
             {"id": "kit-1", "name": "🔥 KIT Leash", "cost": 0.80, "price": 5.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
-            {"id": "vent-1", "name": "🌬️ Ventaglio", "cost": 0.80, "price": 5.0, "initial_qty": 150, "current_qty": 150, "is_bundle": False},
-            {"id": "bundle-starter", "name": "☢️ RAVE PACK", "cost": 0.0, "price": 10.0, "initial_qty": 999, "current_qty": 999, "is_bundle": True, "bundle_composition": {"kit-1": 1, "vent-1": 1}}
+            {"id": "drink-1", "name": "🍺 Birra", "cost": 1.00, "price": 5.0, "initial_qty": 200, "current_qty": 200, "is_bundle": False}
         ]
         salva_db_inventario()
 
     if os.path.exists(DB_VENDITE):
         with open(DB_VENDITE, "r", encoding="utf-8") as f:
             vendite = json.load(f)
-            for v in vendite:
-                v['timestamp'] = datetime.fromisoformat(v['timestamp'])
+            for v in vendite: v['timestamp'] = datetime.fromisoformat(v['timestamp'])
             st.session_state.sales_history = vendite
     else:
         st.session_state.sales_history = []
@@ -120,259 +150,117 @@ if 'db_caricato' not in st.session_state:
 if 'carrello' not in st.session_state:
     st.session_state.carrello = {}
 
-# --- FUNZIONI CARRELLO E VENDITA ---
+# --- FUNZIONI OPERATIVE ---
 def aggiungi_al_carrello(item_id):
-    if item_id in st.session_state.carrello:
-        st.session_state.carrello[item_id] += 1
-    else:
-        st.session_state.carrello[item_id] = 1
+    st.session_state.carrello[item_id] = st.session_state.carrello.get(item_id, 0) + 1
 
-def svuota_carrello():
-    st.session_state.carrello = {}
-
-def registra_vendita(item_id, quantity=1):
-    item = next((i for i in st.session_state.inventory_list if i["id"] == item_id), None)
-    if not item: return False
-
-    if item.get("is_bundle"):
-        comp = item.get("bundle_composition", {})
-        for c_id, c_qty in comp.items():
-            c_item = next((i for i in st.session_state.inventory_list if i["id"] == c_id), None)
-            if not c_item or c_item["current_qty"] < (c_qty * quantity):
-                st.error(f"❌ Stock insufficiente per comporre il bundle!")
-                return False
-        
-        total_cost = 0
-        for c_id, c_qty in comp.items():
-            c_item = next((i for i in st.session_state.inventory_list if i["id"] == c_id))
-            c_item["current_qty"] -= (c_qty * quantity)
-            total_cost += c_item["cost"] * (c_qty * quantity)
-        
-        revenue = item["price"] * quantity
-    else:
-        if item["current_qty"] < quantity:
-            st.error(f"❌ ESAURITO: {item['name']}")
-            return False
-        item["current_qty"] -= quantity
-        total_cost = item["cost"] * quantity
-        revenue = item["price"] * quantity
-
-    st.session_state.sales_history.append({
-        "timestamp": datetime.now(),
-        "product_name": item["name"],
-        "quantity": quantity,
-        "revenue": revenue,
-        "cost": total_cost,
-        "profit": revenue - total_cost
-    })
-    
-    salva_db_vendite()
-    salva_db_inventario()
-    return True
-
-def conferma_ordine():
-    if not st.session_state.carrello:
-        return
-
-    successo_totale = True
+def registra_vendita():
+    if not st.session_state.carrello: return
+    successo = True
     for item_id, qta in st.session_state.carrello.items():
-        if not registra_vendita(item_id, quantity=qta):
-            successo_totale = False
-            
-    if successo_totale:
-        st.toast("✅ PAGAMENTO RICEVUTO! Ordine salvato.", icon="⚡")
-    svuota_carrello()
-
-# --- SIDEBAR IMPOSTAZIONI ---
-with st.sidebar:
-    st.markdown("### 🎛️ IMPOSTAZIONI")
-    if st.button("💀 CANCELLA STORICO VENDITE"):
-        st.session_state.sales_history = []
+        item = next((i for i in st.session_state.inventory_list if i["id"] == item_id), None)
+        if item and item["current_qty"] >= qta:
+            item["current_qty"] -= qta
+            rev = item["price"] * qta
+            cost_tot = item["cost"] * qta
+            st.session_state.sales_history.append({
+                "timestamp": datetime.now(), "product_name": item["name"],
+                "quantity": qta, "revenue": rev, "cost": cost_tot, "profit": rev - cost_tot
+            })
+        else:
+            st.error(f"Scorte insufficienti per {item['name'] if item else item_id}")
+            successo = False
+    if successo:
         salva_db_vendite()
-        st.success("Storico vendite azzerato.")
-        st.rerun()
-        
-    if st.button("🔄 FACTORY RESET DATI"):
+        salva_db_inventario()
         st.session_state.carrello = {}
-        if os.path.exists(DB_INVENTARIO): os.remove(DB_INVENTARIO)
-        if os.path.exists(DB_VENDITE): os.remove(DB_VENDITE)
-        del st.session_state.db_caricato
-        st.rerun()
+        st.toast("⚡ Transazione Completata", icon="✅")
 
-# --- MAIN UI (LOGO GRAFFITO AGGIORNATO) ---
-# Visualizza il logo direttamente, occupando quasi tutta la larghezza del contenitore
+# --- INTERFACCIA ---
+
+# 1. LOGO (Caricamento e ritaglio automatico per rimuovere spazi)
 try:
-    st.image("logo.png", use_container_width=True)
+    img = Image.open("logo.png")
+    # Centriamo il logo usando colonne
+    _, col_img, _ = st.columns([1, 4, 1])
+    with col_img:
+        st.image(img, use_container_width=True)
 except:
-    # Fallback nel caso in cui l'immagine non venga trovata
-    st.markdown("<h3 style='text-align:center; color:red;'>⚠️ Immagine 'logo.png' non trovata</h3>", unsafe_allow_html=True)
-        
-tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
+    st.markdown("<h1 style='text-align:center; color:#ff00ff;'>TK LABS</h1>", unsafe_allow_html=True)
 
-# ==========================================
-# TAB 1: CASSA (Layout a 2 Zone con Griglia Fluida)
-# ==========================================
-with tab_cassa:
-    col_pos, col_receipt = st.columns([6, 4], gap="large")
+tab1, tab2, tab3 = st.tabs(["⚡ CASSA", "📦 STOCK", "📈 FINANZA"])
 
-    with col_pos:
-        st.markdown("#### 🛒 TERMINALE OPERATIVO")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        tutti_i_prodotti = st.session_state.inventory_list
-        NUM_COLONNE = 3
-        
-        for i in range(0, len(tutti_i_prodotti), NUM_COLONNE):
-            righe_colonne = st.columns(NUM_COLONNE)
-            
-            for j, col in enumerate(righe_colonne):
-                indice_prodotto = i + j
-                
-                if indice_prodotto < len(tutti_i_prodotti):
-                    item = tutti_i_prodotti[indice_prodotto]
-                    with col:
-                        label_bottone = f"{item['name']}\n{VALUTA_SIMBOLO}{item['price']:.2f}"
-                        st.button(
-                            label_bottone, 
-                            key=f"btn_cassa_{item['id']}", 
-                            on_click=aggiungi_al_carrello, 
-                            args=(item["id"],),
-                            use_container_width=True
-                        )
-
-    with col_receipt:
-        st.markdown("""
-            <div style='background-color: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #2d2d2d;'>
-                <h3 style='margin-top: 0; color: #f5f5f7;'>🛒 ORDINE ATTUALE</h3>
-        """, unsafe_allow_html=True)
-        
-        totale_ordine = 0.0
-        
-        if st.session_state.carrello:
-            for item_id, qta in st.session_state.carrello.items():
-                item_info = next((i for i in st.session_state.inventory_list if i["id"] == item_id), None)
-                if item_info:
-                    subtotale = item_info["price"] * qta
-                    totale_ordine += subtotale
-                    st.markdown(f"**{qta}x** {item_info['name']} = **{VALUTA_SIMBOLO}{subtotale:.2f}**")
-            
-            st.divider()
-            st.metric(label="TOTALE DA INCASSARE", value=f"{VALUTA_SIMBOLO} {totale_ordine:.2f}")
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            col_btn_1, col_btn_2 = st.columns(2)
-            with col_btn_1:
-                st.button("❌ ANNULLA", use_container_width=True, on_click=svuota_carrello)
-            with col_btn_2:
-                st.button("✅ PAGA", type="primary", use_container_width=True, on_click=conferma_ordine)
-                
-        else:
-            st.info("Terminale pronto. Aggiungi prodotti all'ordine.")
-            st.metric(label="TOTALE DA INCASSARE", value=f"{VALUTA_SIMBOLO} 0.00")
-            
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# ==========================================
-# TAB 2: INVENTARIO E GESTIONE
-# ==========================================
-with tab_inventario:
-    st.markdown("#### > GESTIONE DATABASE")
-    st.info("💡 Usa il tasto ➕ nell'angolo in basso a destra della tabella per aggiungere nuovi prodotti da zero.")
-
-    colonne_db = ["id", "name", "cost", "price", "initial_qty", "current_qty", "is_bundle", "bundle_composition"]
+# --- TAB 1: CASSA ---
+with tab1:
+    c1, c2 = st.columns([6, 4])
+    with c1:
+        st.markdown("### 🛒 SHOP")
+        prodotti = st.session_state.inventory_list
+        cols = st.columns(3)
+        for i, p in enumerate(prodotti):
+            with cols[i % 3]:
+                if st.button(f"{p['name']}\n{VALUTA_SIMBOLO}{p['price']:.2f}", key=p['id']):
+                    aggiungi_al_carrello(p['id'])
     
-    if st.session_state.inventory_list:
-        df_inv = pd.DataFrame(st.session_state.inventory_list)
-    else:
-        df_inv = pd.DataFrame(columns=colonne_db)
-    
-    cfg = {
-        "id": st.column_config.TextColumn("ID (Univoco)", required=True, default="nuovo-id"),
-        "name": st.column_config.TextColumn("NOME PRODOTTO", required=True, default="Nuovo Prodotto"),
-        "cost": st.column_config.NumberColumn("COSTO", format=f"{VALUTA_SIMBOLO}%.2f", default=0.0),
-        "price": st.column_config.NumberColumn("PREZZO", format=f"{VALUTA_SIMBOLO}%.2f", default=5.0),
-        "initial_qty": st.column_config.NumberColumn("QTA INIZIALE", default=100),
-        "current_qty": st.column_config.NumberColumn("QTA ATTUALE", default=100),
-        "is_bundle": st.column_config.CheckboxColumn("BUNDLE?", default=False),
-        "bundle_composition": st.column_config.TextColumn("COMPOSIZIONE (ID:QTY)")
-    }
-    
-    edited_df = st.data_editor(
-        df_inv, 
-        key="inv_editor", 
-        num_rows="dynamic", 
-        column_config=cfg, 
-        use_container_width=True, 
-        hide_index=True
-    )
-    
-    if st.button("💾 SALVA E AGGIORNA CASSA", type="primary", use_container_width=True):
-        nuovi_dati = edited_df.to_dict('records')
-        lista_id = [item['id'] for item in nuovi_dati if item['id']]
+    with c2:
+        st.markdown("### 🧾 ORDINE")
+        totale = 0.0
+        for i_id, qta in st.session_state.carrello.items():
+            p = next(x for x in prodotti if x['id'] == i_id)
+            sub = p['price'] * qta
+            totale += sub
+            st.write(f"**{qta}x** {p['name']} — {VALUTA_SIMBOLO}{sub:.2f}")
         
-        if len(lista_id) != len(set(lista_id)):
-            st.error("❌ ERRORE: Hai inserito due o più prodotti con lo STESSO ID! Modifica la prima colonna in modo che ogni ID sia diverso (es. kit-1, kit-2).")
-        else:
-            st.session_state.inventory_list = nuovi_dati
-            salva_db_inventario()
-            st.success("Database aggiornato! La cassa ora riflette i nuovi prodotti.")
+        st.divider()
+        st.metric("TOTALE", f"{VALUTA_SIMBOLO} {totale:.2f}")
+        if st.button("CONFERMA PAGAMENTO", type="primary", use_container_width=True):
+            registra_vendita()
+            st.rerun()
+        if st.button("SVUOTA CARRELLO", use_container_width=True):
+            st.session_state.carrello = {}
             st.rerun()
 
-    # --- ZONA RESET IN FONDO ALLA PAGINA ---
+# --- TAB 2: STOCK ---
+with tab2:
+    st.markdown("### 📦 GESTIONE INVENTARIO")
+    df_inv = pd.DataFrame(st.session_state.inventory_list)
+    edited_df = st.data_editor(df_inv, num_rows="dynamic", use_container_width=True, hide_index=True)
+    
+    if st.button("💾 AGGIORNA DATABASE", type="primary", use_container_width=True):
+        st.session_state.inventory_list = edited_df.to_dict('records')
+        salva_db_inventario()
+        st.success("Dati Salvati")
+        st.rerun()
+    
     st.divider()
-    st.markdown("#### ⚠️ ZONA DI PERICOLO")
-    if st.button("🗑️ AZZERA TUTTO L'INVENTARIO"):
+    if st.button("🗑️ RESET TOTALE INVENTARIO"):
         st.session_state.inventory_list = []
         salva_db_inventario()
         st.rerun()
 
-# ==========================================
-# TAB 3: ANALISI E REPORT
-# ==========================================
-with tab_analisi:
-    st.markdown("#### > METRICHE DI SISTEMA")
-
+# --- TAB 3: FINANZA ---
+with tab3:
+    st.markdown("### 💰 RENDIMENTO ATTIVITÀ")
     if st.session_state.sales_history:
-        df_sales = pd.DataFrame(st.session_state.sales_history)
+        df_s = pd.DataFrame(st.session_state.sales_history)
         
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("RICAVO", f"{VALUTA_SIMBOLO}{df_sales['revenue'].sum():.2f}")
-        m2.metric("COSTI MERCE", f"{VALUTA_SIMBOLO}{df_sales['cost'].sum():.2f}")
-        m3.metric("PROFITTO NETTO", f"{VALUTA_SIMBOLO}{df_sales['profit'].sum():.2f}")
-        m4.metric("UNITÀ VENDUTE", f"{df_sales['quantity'].sum()}")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("INCASSI", f"{VALUTA_SIMBOLO}{df_s['revenue'].sum():.2f}")
+        m2.metric("PROFITTO NETTO", f"{VALUTA_SIMBOLO}{df_s['profit'].sum():.2f}")
+        m3.metric("MARGINE MEDIO", f"{int((df_s['profit'].sum() / df_s['revenue'].sum()) * 100)}%")
         
         st.divider()
+        st.markdown("**REGISTRO TRANSAZIONI**")
+        st.dataframe(df_s.sort_index(ascending=False), use_container_width=True, hide_index=True)
         
-        st.markdown("**🧾 REGISTRO ULTIME VENDITE**")
-        st.dataframe(
-            df_sales[['timestamp', 'product_name', 'quantity', 'revenue', 'profit']].tail(15).sort_index(ascending=False), 
-            use_container_width=True, 
-            hide_index=True
-        )
-            
-        # --- ZONA ESPORTAZIONE E RESET IN FONDO ALLA PAGINA ---
         st.divider()
-        st.markdown("#### 📥 CHIUSURA SERATA")
+        # ESPORTAZIONE
+        csv = df_s.to_csv(index=False).encode('utf-8')
+        st.download_button("📥 SCARICA REPORT CSV", data=csv, file_name="report_tklz.csv", mime="text/csv", use_container_width=True)
         
-        df_export = pd.DataFrame(st.session_state.sales_history)
-        csv_data = df_export.to_csv(index=False).encode('utf-8')
-        nome_file = f"chiusura_cassa_{datetime.now().strftime('%Y_%m_%d')}.csv"
-        
-        st.download_button(
-            label="📥 1. ESPORTA REPORT A FINE SERATA (CSV)",
-            data=csv_data,
-            file_name=nome_file,
-            mime="text/csv",
-            type="primary",
-            use_container_width=True
-        )
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button("💀 2. AZZERA STATISTICHE VENDITE", use_container_width=True):
+        if st.button("💀 AZZERA CRONOLOGIA VENDITE", use_container_width=True):
             st.session_state.sales_history = []
             salva_db_vendite()
             st.rerun()
-            
     else:
-        st.info("Nessuna transazione registrata. Inizia a vendere per popolare le metriche.")
+        st.info("Nessuna vendita registrata.")
