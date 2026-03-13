@@ -71,6 +71,54 @@ st.markdown("""
 # --- COSTANTI E CONFIGURAZIONI ---
 VALUTA_SIMBOLO = "€"
 
+# --- MOTORE DATABASE LOCALE (JSON) ---
+DB_INVENTARIO = "db_inventario.json"
+DB_VENDITE = "db_vendite.json"
+
+def salva_db_inventario():
+    with open(DB_INVENTARIO, "w") as f:
+        json.dump(st.session_state.inventory_list, f, indent=4)
+
+def salva_db_vendite():
+    # Convertiamo i timestamp in stringhe per poterli salvare in JSON
+    vendite_serializzabili = []
+    for v in st.session_state.sales_history:
+        v_copy = v.copy()
+        if isinstance(v_copy['timestamp'], datetime):
+            v_copy['timestamp'] = v_copy['timestamp'].isoformat()
+        vendite_serializzabili.append(v_copy)
+        
+    with open(DB_VENDITE, "w") as f:
+        json.dump(vendite_serializzabili, f, indent=4)
+
+def carica_db():
+    # Carica Inventario
+    if os.path.exists(DB_INVENTARIO):
+        with open(DB_INVENTARIO, "r") as f:
+            st.session_state.inventory_list = json.load(f)
+    else:
+        # Dati di default se il file non esiste ancora
+        st.session_state.inventory_list = [
+            {"id": "kit-1", "name": "🔥 KIT Leash", "cost": 0.80, "price": 5.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
+            {"id": "vent-1", "name": "🌬️ Ventaglio", "cost": 0.80, "price": 5.0, "initial_qty": 150, "current_qty": 150, "is_bundle": False},
+            {"id": "tapp-1", "name": "👂 Tappi", "cost": 0.05, "price": 1.0, "initial_qty": 1000, "current_qty": 1000, "is_bundle": False},
+            {"id": "glow-1", "name": "✨ Glow Stick", "cost": 0.10, "price": 1.0, "initial_qty": 500, "current_qty": 500, "is_bundle": False},
+            {"id": "bundle-starter", "name": "☢️ RAVE PACK", "cost": 1.00, "price": 10.0, "initial_qty": 999, "current_qty": 999, "is_bundle": True, "bundle_composition": {"kit-1": 1, "vent-1": 1, "glow-1": 2}}
+        ]
+        salva_db_inventario()
+
+    # Carica Vendite
+    if os.path.exists(DB_VENDITE):
+        with open(DB_VENDITE, "r") as f:
+            vendite = json.load(f)
+            # Riconvertiamo le stringhe in datetime
+            for v in vendite:
+                v['timestamp'] = datetime.fromisoformat(v['timestamp'])
+            st.session_state.sales_history = vendite
+    else:
+        st.session_state.sales_history = []
+        salva_db_vendite()
+
 # --- INIZIALIZZAZIONE DATI ---
 if 'inventory_list' not in st.session_state:
     st.session_state.inventory_list = [
