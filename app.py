@@ -7,7 +7,7 @@ import os
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="TKLABZ Terminal",
+    page_title="TKLZ | POS Terminal",
     page_icon="🦇",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -16,14 +16,12 @@ st.set_page_config(
 # --- TEMA CLEAN & MINIMAL (CSS) ---
 st.markdown("""
     <style>
-    /* Sfondo generale elegante */
     .stApp {
         background-color: #121212;
         color: #f5f5f7;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Bottoni Cassa - Clean & Modern */
     .stButton>button {
         width: 100%;
         height: 100px;
@@ -44,7 +42,6 @@ st.markdown("""
         box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* Bottone Paga (Primary) - Verde brillante e pulito */
     div.stButton > button[kind="primary"] {
         background-color: #30d158;
         color: #ffffff;
@@ -56,7 +53,6 @@ st.markdown("""
         color: #ffffff;
     }
 
-    /* Metriche e Box laterali */
     div[data-testid="metric-container"] {
         background-color: #1e1e1e;
         border: 1px solid #2d2d2d;
@@ -68,12 +64,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- COSTANTI E CONFIGURAZIONI ---
+# --- COSTANTI E DATABASE ---
 VALUTA_SIMBOLO = "€"
 DB_INVENTARIO = "db_inventario.json"
 DB_VENDITE = "db_vendite.json"
 
-# --- MOTORE DATABASE LOCALE (JSON) ---
 def salva_db_inventario():
     with open(DB_INVENTARIO, "w", encoding="utf-8") as f:
         json.dump(st.session_state.inventory_list, f, indent=4, ensure_ascii=False)
@@ -95,11 +90,10 @@ def carica_db():
             st.session_state.inventory_list = json.load(f)
     else:
         st.session_state.inventory_list = [
-            {"id": "kit-1", "name": "🔥 KIT Accendino", "cost": 0.80, "price": 4.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
+            {"id": "drink-1", "name": "🍺 Birra", "cost": 1.00, "price": 5.0, "initial_qty": 200, "current_qty": 200, "is_bundle": False},
+            {"id": "kit-1", "name": "🔥 KIT Leash", "cost": 0.80, "price": 5.0, "initial_qty": 400, "current_qty": 400, "is_bundle": False},
             {"id": "vent-1", "name": "🌬️ Ventaglio", "cost": 0.80, "price": 5.0, "initial_qty": 150, "current_qty": 150, "is_bundle": False},
-            {"id": "tapp-1", "name": "👂 Tappi", "cost": 0.05, "price": 1.0, "initial_qty": 1000, "current_qty": 1000, "is_bundle": False},
-            {"id": "glow-1", "name": "✨ Glow Stick", "cost": 0.10, "price": 1.0, "initial_qty": 500, "current_qty": 500, "is_bundle": False},
-            {"id": "bundle-starter", "name": "☢️ RAVE PACK", "cost": 1.00, "price": 10.0, "initial_qty": 999, "current_qty": 999, "is_bundle": True, "bundle_composition": {"kit-1": 1, "vent-1": 1, "glow-1": 2}}
+            {"id": "bundle-starter", "name": "☢️ RAVE PACK", "cost": 0.0, "price": 10.0, "initial_qty": 999, "current_qty": 999, "is_bundle": True, "bundle_composition": {"kit-1": 1, "vent-1": 1}}
         ]
         salva_db_inventario()
 
@@ -113,7 +107,6 @@ def carica_db():
         st.session_state.sales_history = []
         salva_db_vendite()
 
-# --- INIZIALIZZAZIONE DATI ---
 if 'db_caricato' not in st.session_state:
     carica_db()
     st.session_state.db_caricato = True
@@ -121,7 +114,7 @@ if 'db_caricato' not in st.session_state:
 if 'carrello' not in st.session_state:
     st.session_state.carrello = {}
 
-# --- FUNZIONI LOGICHE (CALLBACKS) ---
+# --- FUNZIONI CARRELLO E VENDITA ---
 def aggiungi_al_carrello(item_id):
     if item_id in st.session_state.carrello:
         st.session_state.carrello[item_id] += 1
@@ -184,7 +177,7 @@ def conferma_ordine():
         st.toast("✅ PAGAMENTO RICEVUTO! Ordine salvato.", icon="⚡")
     svuota_carrello()
 
-# --- SIDEBAR (SYS.CTRL) ---
+# --- SIDEBAR IMPOSTAZIONI ---
 with st.sidebar:
     st.markdown("### 🎛️ IMPOSTAZIONI")
     if st.button("💀 CANCELLA STORICO VENDITE"):
@@ -200,17 +193,17 @@ with st.sidebar:
         del st.session_state.db_caricato
         st.rerun()
 
-# --- MAIN UI (TITOLO TKLABZ FLUO) ---
+# --- MAIN UI ---
 st.markdown("""
-    <h2 style=style='text-align: center; color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; margin-bottom: 20px;'>
-        🦇 TKLABZ
+    <h2 style='text-align: center; color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff; margin-bottom: 20px;'>
+        🦇 TKLZ
     </h2>
 """, unsafe_allow_html=True)
 
 tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
 
 # ==========================================
-# TAB 1: CASSA (Layout a 2 Zone Dinamico)
+# TAB 1: CASSA (Layout a 2 Zone)
 # ==========================================
 with tab_cassa:
     col_pos, col_receipt = st.columns([6, 4], gap="large")
@@ -285,7 +278,7 @@ with tab_cassa:
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# TAB 2: INVENTARIO (CRUD COMPLETO E RESET)
+# TAB 2: INVENTARIO (Anti-Doppioni)
 # ==========================================
 with tab_inventario:
     col_titolo, col_azioni = st.columns([7, 3])
@@ -328,26 +321,21 @@ with tab_inventario:
         hide_index=True
     )
     
-        if st.button("💾 SALVA E AGGIORNA CASSA", type="primary"):
-        # Preleva i dati dalla tabella
+    if st.button("💾 SALVA E AGGIORNA CASSA", type="primary"):
         nuovi_dati = edited_df.to_dict('records')
+        lista_id = [item['id'] for item in nuovi_dati if item['id']]
         
-        # Estrae tutti gli ID per controllare se ci sono doppioni
-        lista_id = [item['id'] for item in nuovi_dati]
-        
+        # Controllo di sicurezza per evitare errori critici di Streamlit
         if len(lista_id) != len(set(lista_id)):
-            # Se trova doppioni, blocca il salvataggio e lancia l'allarme
-            st.error("❌ ERRORE DI SALVATAGGIO: Hai inserito due o più prodotti con lo STESSO ID! Controlla la prima colonna e assicurati che ogni riga abbia un ID completamente diverso (es. drink-1, drink-2).")
+            st.error("❌ ERRORE: Hai inserito due o più prodotti con lo STESSO ID! Modifica la prima colonna in modo che ogni ID sia diverso (es. kit-1, kit-2).")
         else:
-            # Se è tutto ok, salva
             st.session_state.inventory_list = nuovi_dati
             salva_db_inventario()
             st.success("Database aggiornato! La cassa ora riflette i nuovi prodotti.")
             st.rerun()
 
-
 # ==========================================
-# TAB 3: ANALISI E REPORT (CON ESPORTAZIONE)
+# TAB 3: ANALISI E REPORT (Con Esportazione CSV)
 # ==========================================
 with tab_analisi:
     col_titolo_an, col_export = st.columns([7, 3])
