@@ -199,18 +199,14 @@ with st.sidebar:
         del st.session_state.db_caricato
         st.rerun()
 
-# --- MAIN UI (LOGO GRAFFITO) ---
-# Usa 3 colonne per spingere il logo al centro. Modifica i numeri se lo vuoi più grande o più piccolo.
-col_vuota_sinistra, col_logo, col_vuota_destra = st.columns([1.5, 2, 1.5])
-with col_logo:
-    try:
-        st.image("logo.jpg", use_container_width=True)
-    except:
-        # Fallback nel caso in cui l'immagine non venga trovata
-        st.markdown("<h3 style='text-align:center; color:red;'>⚠️ Immagine 'logo.jpg' non trovata</h3>", unsafe_allow_html=True)
+# --- MAIN UI (LOGO GRAFFITO AGGIORNATO) ---
+# Visualizza il logo direttamente, occupando quasi tutta la larghezza del contenitore
+try:
+    st.image("logo.png", use_container_width=True)
+except:
+    # Fallback nel caso in cui l'immagine non venga trovata
+    st.markdown("<h3 style='text-align:center; color:red;'>⚠️ Immagine 'logo.png' non trovata</h3>", unsafe_allow_html=True)
         
-st.markdown("<br>", unsafe_allow_html=True)
-
 tab_cassa, tab_inventario, tab_analisi = st.tabs(["[1] TERMINALE CASSA", "[2] DB INVENTARIO", "[3] DATI & ANALISI"])
 
 # ==========================================
