@@ -92,7 +92,18 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- BARRA MATRIX ---
-frase = "IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA."
+frase = "Nella penombra del magazzino, tra i neon che friggono,
+i conti tornano sempre, anche quando i cuori si affliggono.
+Cifre che scorrono su vetri scuri, silenziose e affilate,
+mentre fuori le ombre si muovono, su strade dimenticate.
+​Un occhio al terminale, l'altro alla porta blindata,
+la merce è vita, la cassa è la nostra spada affilata.
+Non servono nomi, non servono troppe parole,
+qui il business fiorisce lontano dal raggio del sole.
+​Un clic, una vendita, un altro drop che decolla,
+mentre il codice brucia e la città si controlla.
+Underground nel sangue, TK Labs nella mente,
+muoviamo il capitale, restando nell'ombra, segretamente."
 st.markdown(f'<div class="matrix-bar"><div class="matrix-text">[{frase}] — [{frase}] — [{frase}]</div></div>', unsafe_allow_html=True)
 
 # --- DB ENGINE ---
