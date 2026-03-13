@@ -8,18 +8,25 @@ from PIL import Image
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="TKLZ | MATRIX POS", layout="wide", initial_sidebar_state="collapsed")
 
-# --- STILE MATRIX CENTRATO & NEON ---
+# --- STILE MATRIX TOTALE CENTRATO ---
 st.markdown("""
     <style>
     .stApp { background-color: #0a0a0a; color: #ffffff !important; }
-    h1, h2, h3, h4, p, label, .stMarkdown { 
+    
+    /* Centratura Universale */
+    h1, h2, h3, h4, p, label, .stMarkdown, [data-testid="stMarkdownContainer"] { 
         color: #ffffff !important; 
         font-family: 'Courier New', monospace !important;
-        text-align: center;
+        text-align: center !important;
+        display: flex;
+        justify-content: center;
+        width: 100%;
     }
     
+    /* Logo spacing */
     [data-testid="stImage"] { display: flex; justify-content: center; padding: 0 !important; margin: -10px 0 -15px 0 !important; }
     
+    /* BARRA MATRIX */
     .matrix-bar {
         background-color: #000000;
         border-top: 2px solid #00ff41;
@@ -46,8 +53,18 @@ st.markdown("""
     @keyframes matrix-scroll { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
     @keyframes flicker { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
+    /* Centratura Tabs e Contenuto */
     .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: center; }
+    
+    /* Centratura specifica per la Cassa (Shop e Ordine) */
+    [data-testid="column"] {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+    }
 
+    /* Bottoni Cassa */
     .stButton>button {
         width: 100%; height: 85px;
         background: rgba(20, 20, 20, 0.9) !important;
@@ -56,7 +73,7 @@ st.markdown("""
         border-radius: 5px !important;
         font-weight: bold !important;
         transition: all 0.2s;
-        text-align: center;
+        text-align: center !important;
     }
     .stButton>button:hover { 
         box-shadow: 0 0 15px #00ff41 !important;
@@ -64,14 +81,19 @@ st.markdown("""
         color: #000000 !important;
     }
     
-    [data-testid="stMetric"] { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    /* Metriche Centrate */
+    [data-testid="stMetric"] {
+        text-align: center !important;
+        align-items: center !important;
+    }
+
     header {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- BARRA MATRIX ---
-testo_matrix = "[SYSTEM: IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA.]"
-st.markdown(f'<div class="matrix-bar"><div class="matrix-text">{testo_matrix} — {testo_matrix} — {testo_matrix}</div></div>', unsafe_allow_html=True)
+frase = "IN QUESTO BUSINESS IL SILENZIO È D'ORO, MA L'INCASSO È DI PLATINO: MUOVI LA MERCE, DOMINA L'OMBRA."
+st.markdown(f'<div class="matrix-bar"><div class="matrix-text">[{frase}] — [{frase}] — [{frase}]</div></div>', unsafe_allow_html=True)
 
 # --- DB ENGINE ---
 DB_INV, DB_VEN = "db_inventario.json", "db_vendite.json"
@@ -105,7 +127,7 @@ try:
     _, mid, _ = st.columns([1, 3, 1])
     mid.image(img, use_container_width=True)
 except:
-    st.markdown("<h1 style='text-align:center; color:#00ff41;'>TKLZ</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#00ff41;'>TKLZ</h1>", unsafe_allow_html=True)
 
 # --- FRAGMENTS ---
 @st.fragment
@@ -125,19 +147,21 @@ def fragment_cassa():
     with c_r:
         st.markdown("### 🧾 ORDINE")
         tot = sum(next(x['price'] for x in inv if x['id'] == k) * v for k, v in st.session_state.cart.items())
-        for id, qta in st.session_state.cart.items():
-            p = next((x for x in inv if x['id'] == id), None)
-            if p: st.write(f"**{qta}x** {p['name']} — **€{p['price']*qta:.2f}**")
-        st.divider()
-        st.metric("TOTALE", f"€ {tot:.2f}")
-        if st.button("✅ CONFERMA", type="primary"):
+        if st.session_state.cart:
             for id, qta in st.session_state.cart.items():
-                it = next((x for x in inv if x["id"] == id), None)
-                if it:
-                    it["current_qty"] -= qta
-                    st.session_state.sales.append({"timestamp": datetime.now(), "product": it["name"], "qta": qta, "revenue": it["price"]*qta, "profit": (it["price"]-it["cost"])*qta})
-            save_all(); st.session_state.cart = {}; st.toast("OK ⚡"); st.rerun()
-        if st.button("🗑️ SVUOTA"): st.session_state.cart = {}; st.rerun()
+                p = next((x for x in inv if x['id'] == id), None)
+                if p: st.markdown(f"**{qta}x** {p['name']} — **€{p['price']*qta:.2f}**")
+            st.divider()
+            st.metric("TOTALE", f"€ {tot:.2f}")
+            if st.button("✅ CONFERMA", type="primary"):
+                for id, qta in st.session_state.cart.items():
+                    it = next((x for x in inv if x["id"] == id), None)
+                    if it:
+                        it["current_qty"] -= qta
+                        st.session_state.sales.append({"timestamp": datetime.now(), "product": it["name"], "qta": qta, "revenue": it["price"]*qta, "profit": (it["price"]-it["cost"])*qta})
+                save_all(); st.session_state.cart = {}; st.toast("OK ⚡"); st.rerun()
+            if st.button("🗑️ SVUOTA"): st.session_state.cart = {}; st.rerun()
+        else: st.markdown("_Carrello vuoto_")
 
 @st.fragment
 def fragment_stock():
@@ -161,31 +185,19 @@ def fragment_analisi():
         m1, m2 = st.columns(2)
         m1.metric("INCASSI", f"€{df_s['revenue'].sum():.2f}")
         m2.metric("PROFITTO", f"€{df_s['profit'].sum():.2f}")
-        
         st.dataframe(df_s.sort_index(ascending=False), use_container_width=True, hide_index=True)
-        
         st.divider()
         st.markdown("#### ⚙️ PANNELLO CONTROLLO")
-        
-        # FIX DOWNLOAD: Prepariamo il CSV fuori dal bottone
         csv_data = df_s.to_csv(index=False).encode('utf-8')
-        
         col_exp, col_res = st.columns(2)
         with col_exp:
-            st.download_button(
-                label="📥 SCARICA REPORT CSV",
-                data=csv_data,
-                file_name=f"TKLZ_Report_{datetime.now().strftime('%d-%m-%Y')}.csv",
-                mime='text/csv',
-                use_container_width=True
-            )
+            st.download_button(label="📥 SCARICA CSV", data=csv_data, file_name=f"report.csv", mime='text/csv', use_container_width=True)
         with col_res:
             if st.button("💀 AZZERA VENDITE", use_container_width=True):
                 st.session_state.sales = []
                 if os.path.exists(DB_VEN): os.remove(DB_VEN)
                 st.rerun()
-    else:
-        st.info("Nessuna vendita registrata.")
+    else: st.info("Nessuna vendita.")
 
 # --- TABS ---
 t1, t2, t3 = st.tabs(["⚡ CASSA", "📦 STOCK", "📈 FINANZA"])
